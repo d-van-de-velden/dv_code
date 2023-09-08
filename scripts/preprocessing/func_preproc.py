@@ -14,21 +14,20 @@ import json
 from PIL import Image
 
 from dv_code.scripts.misc.select_filetype import get_only_nifti, get_only_json
-from dv_code.scripts.misc.feedback_messages import error_message
+
 from dv_code.scripts.misc import check_make_dir
 from dv_code.scripts.processing.func_MRI_quality_metric import calc_tSNR, motion_evaluation, get_tSNR
 from dv_code.scripts.viz.combine_plots import viz_concat_v
 
 
-def do_func_preproc(fdir_analysis="", participants=None, 
-                    params=None, forceRun=True, use_HPC=False):
+def do_func_preproc(participants=None, params=None,
+                    forceRun=True, use_HPC=False):
+    
+    
     if participants is None:
         participants = []
     check_make_dir(params.get('fdir_proc_pre'))
 
-    if not fdir_analysis:
-        input_str = "Variable 1 (fdir_analysis) is not provided. ABORT"
-        error_message(input_str)
 
     env_path = os.getenv('PATH')
     host = '.'
@@ -57,9 +56,9 @@ def do_func_preproc(fdir_analysis="", participants=None,
 
             runs = os.listdir(tmp_fdir_func)
             runs = get_only_nifti(runs, 1)
-            print(runs)
-            runs.sort()
             
+            runs.sort()
+            print(runs)
             if len(runs) > 0:
                 fdir_derivatives_func = (params.get('fdir_proc_pre')
                                     + '/' + participants[iSubj] 
@@ -75,6 +74,7 @@ def do_func_preproc(fdir_analysis="", participants=None,
             if os.path.exists(tmp_fname_T1w):
             
                 for run in runs:
+                    
                     tmp_fname_funcMR = f'{tmp_fdir_func}/{run}'
 
                     tmp_fname_final_funcMR = (fdir_derivatives_func

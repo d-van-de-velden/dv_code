@@ -15,6 +15,8 @@ This function creates the analysis_params.json file based on these answers.
 import os 
 import json
 import tkinter
+import site
+
 from tkinter import simpledialog
 from dv_code.scripts.misc import check_make_dir
 from dv_code.scripts.misc.feedback_messages import say_welcome
