@@ -242,5 +242,5 @@ def plot_beta_map(fmri_map=None, anat=None, contrastID=None):
             title=contrastID,
         )
     plotting.show()
-    
+    print('.')
     return
