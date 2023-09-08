@@ -815,15 +815,15 @@
 
 # def calc_simple_dprime(hits, fas, total):
 
-    hitP = hits / total
-    faP  =  fas / total
+    # hitP = hits / total
+    # faP  =  fas / total
 
-    # z-scores
-    hitZ = stats.norm.ppf(hitP)
-    faZ  = stats.norm.ppf(faP)
+    # # z-scores
+    # hitZ = stats.norm.ppf(hitP)
+    # faZ  = stats.norm.ppf(faP)
 
-    # d-prime
-    dPrime = hitZ-faZ
-    print(dPrime)
+    # # d-prime
+    # dPrime = hitZ-faZ
+    # print(dPrime)
     
-    return(dPrime)
+    # return(dPrime)
