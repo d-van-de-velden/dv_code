@@ -48,134 +48,134 @@ def do_func_preproc(participants=None, params=None,
             tmp_fdir_func = f'{tmp_fdir_subj}/{session}/func/'
             tmp_fdir_fmap = f'{tmp_fdir_subj}/{session}/fmap/'
 
-            tmp_fs = os.listdir(tmp_fdir_fmap)
-            tmp_fs = get_only_json(tmp_fs)
-            with open(f'{tmp_fdir_fmap}/{tmp_fs[0]}') as f:
-                fmap_json = json.load(f)
-            TotalReadOutTime = fmap_json.get('TotalReadoutTime')
+            if os.path.exists(tmp_fdir_fmap):
+                tmp_fs = os.listdir(tmp_fdir_fmap)
+                tmp_fs = get_only_json(tmp_fs)
+                with open(f'{tmp_fdir_fmap}/{tmp_fs[0]}') as f:
+                    fmap_json = json.load(f)
+                TotalReadOutTime = fmap_json.get('TotalReadoutTime')
 
-            runs = os.listdir(tmp_fdir_func)
-            runs = get_only_nifti(runs, 1)
-            
-            runs.sort()
-            print(runs)
-            if len(runs) > 0:
-                fdir_derivatives_func = (params.get('fdir_proc_pre')
-                                    + '/' + participants[iSubj] 
-                                    + '/' + session + '/func'
-                                    )
-                check_make_dir(fdir_derivatives_func)
-                fdir_derivatives_anat = (params.get('fdir_proc_pre')
-                                    + '/' + participants[iSubj] 
-                                    + '/' + session + '/anat'
-                                    )
-                tmp_fname_T1w = f'{fdir_derivatives_anat}/{participants[iSubj]}_{session}_T1w_nu.nii.gz'
+                runs = os.listdir(tmp_fdir_func)
+                runs = get_only_nifti(runs, 1)
+                
+                runs.sort()
+                print(runs)
+                if len(runs) > 0:
+                    fdir_derivatives_func = (params.get('fdir_proc_pre')
+                                        + '/' + participants[iSubj] 
+                                        + '/' + session + '/func/'
+                                        )
+                    check_make_dir(fdir_derivatives_func)
+                    fdir_derivatives_anat = (params.get('fdir_proc_pre')
+                                        + '/' + participants[iSubj] 
+                                        + '/' + session + '/anat/'
+                                        )
+                    tmp_fname_T1w = f'{fdir_derivatives_anat}/{participants[iSubj]}_{session}_T1w_nu.nii.gz'
 
-            if os.path.exists(tmp_fname_T1w):
-            
-                for run in runs:
-                    
-                    tmp_fname_funcMR = f'{tmp_fdir_func}/{run}'
+                if os.path.exists(tmp_fname_T1w):
+                
+                    for run in runs:
+                        
+                        tmp_fname_funcMR = f'{tmp_fdir_func}/{run}'
 
-                    tmp_fname_final_funcMR = (fdir_derivatives_func
-                                                + '/' + str(run)[:-7]
-                                                + '_st_mcf_topUP.nii.gz')
-                    if (os.path.exists(tmp_fname_final_funcMR) == False) or (forceRun == True):
-                        print('Preprocessed file for functional data does not exist...')
+                        tmp_fname_final_funcMR = (fdir_derivatives_func
+                                                    + '/' + str(run)[:-7]
+                                                    + '_st_mcf_topUP.nii.gz')
+                        if (os.path.exists(tmp_fname_final_funcMR) == False) or (forceRun == True):
+                            print('Preprocessed file for functional data does not exist...')
 
-                        if os.path.exists(tmp_fname_final_funcMR) == True and forceRun == True:
-                            print('''!!! Preprocessed file for functional data DID exist.
-                                    \nFORCING rerun ....''')
+                            if os.path.exists(tmp_fname_final_funcMR) == True and forceRun == True:
+                                print('''!!! Preprocessed file for functional data DID exist.
+                                        \nFORCING rerun ....''')
 
-                        if os.path.exists(tmp_fname_funcMR):
-                            print(tmp_fname_funcMR)
+                            if os.path.exists(tmp_fname_funcMR):
+                                print(tmp_fname_funcMR)
 
-                            fdir_bash_script = (params.get('fdir_bash') 
-                                                + '/' + participants[iSubj]
-                                                + '/' + session
-                                                + '/func_preprocessing/')
-                            fdir_lib_bash = params.get('fdir_lib_bash')
-                            check_make_dir(fdir_bash_script)
-                            fname_bash_script = (fdir_bash_script
-                                                + '/run_funcPreproc.sh' 
-                                                )
-                            fname_bash_script_ = (fdir_lib_bash
-                                                + '/runner_func_preproc.sh'
-                                                )
-                            check_make_dir(fdir_bash_script)
+                                fdir_bash_script = (params.get('fdir_bash') 
+                                                    + '/' + participants[iSubj]
+                                                    + '/' + session
+                                                    + '/func_preprocessing/')
+                                fdir_lib_bash = params.get('fdir_lib_bash')
+                                check_make_dir(fdir_bash_script)
+                                fname_bash_script = (fdir_bash_script
+                                                    + '/run_funcPreproc.sh' 
+                                                    )
+                                fname_bash_script_ = (fdir_lib_bash
+                                                    + '/runner_func_preproc.sh'
+                                                    )
+                                check_make_dir(fdir_bash_script)
 
-                            with open(fname_bash_script, 'w') as rsh:
-                                    rsh.write('''
-                                    #! /bin/sh
-                                    echo "I start AFNI + FSL now...."
-                                    FREESURFER AFNI FSL bash ''' + fname_bash_script_
-                                    + ''' -s ''' + participants[iSubj]
-                                    + ''' -e ''' + session
-                                    + ''' -f ''' + tmp_fname_funcMR
-                                    + ''' -u ''' + tmp_fdir_func
-                                    + ''' -l ''' + tmp_fdir_fmap
-                                    + ''' -t ''' + str(TotalReadOutTime)
-                                    + ''' -a ''' + tmp_fname_T1w
-                                    + ''' -o ''' + fdir_derivatives_func 
-                                    + ''' \n exit \n quit \n q 
-                                    ''')
+                                with open(fname_bash_script, 'w') as rsh:
+                                        rsh.write('''
+                                        #! /bin/sh
+                                        echo "I start AFNI + FSL now...."
+                                        FREESURFER AFNI FSL bash ''' + fname_bash_script_
+                                        + ''' -s ''' + participants[iSubj]
+                                        + ''' -e ''' + session
+                                        + ''' -f ''' + tmp_fname_funcMR
+                                        + ''' -u ''' + tmp_fdir_func
+                                        + ''' -l ''' + tmp_fdir_fmap
+                                        + ''' -d ''' + fdir_derivatives_anat
+                                        + ''' -t ''' + str(TotalReadOutTime)
+                                        + ''' -a ''' + tmp_fname_T1w
+                                        + ''' -o ''' + fdir_derivatives_func 
+                                        + ''' \n exit \n quit \n q 
+                                        ''')
 
-                            os.chmod(fname_bash_script, stat.S_IRWXU)
-                            os.chmod(fname_bash_script_, stat.S_IRWXU)
-                            if use_HPC == 1:
-                                print('Use HPC cluster for computation...')
-                            else:
-                                print('Use local machine for computation...')
-                                fname_block_file = f'{fdir_bash_script}/blocked.txt'
-
-                                if os.path.exists(fname_block_file):
-                                    print('Job already running....')
+                                os.chmod(fname_bash_script, stat.S_IRWXU)
+                                os.chmod(fname_bash_script_, stat.S_IRWXU)
+                                if use_HPC == 1:
+                                    print('Use HPC cluster for computation...')
                                 else:
-                                    with open(fname_block_file, 'w') as rsh:
-                                        rsh.write("BLOCKED JOB\nfname= " + fname_bash_script)
+                                    print('Use local machine for computation...')
+                                    fname_block_file = f'{fdir_bash_script}/blocked.txt'
 
-                                    # To debug
-
-                                    if host == 'mpg':
-                                        os.system(f'xterm -geometry 60x80 -e bash {fname_bash_script}')
+                                    if os.path.exists(fname_block_file):
+                                        print('Job already running....')
                                     else:
-                                        os.system(f'xterm -geometry 60x80 -e bash {fname_bash_script_}')
-                                    os.remove(fname_block_file)
+                                        with open(fname_block_file, 'w') as rsh:
+                                            rsh.write("BLOCKED JOB\nfname= " + fname_bash_script)
 
-                                    prefix_del1 = os.path.basename(f'{tmp_fname_final_funcMR[:-7]}_r_')
-                                    prefix_del2 = os.path.basename(f'{tmp_fname_final_funcMR[:-3]}_r')
-                                    for f in os.listdir(fdir_derivatives_func):
-                                        if re.match(prefix_del1, f):
-                                            os.remove(f'{fdir_derivatives_func}/{f}')
-                                        if re.match(prefix_del2, f):
-                                            os.remove(f'{fdir_derivatives_func}/{f}')
+                                        if host == 'mpg':
+                                            os.system(f'xterm -geometry 70x80 -e  bash {fname_bash_script}')
+                                        else:
+                                            os.system(f'xterm -geometry 70x80 -e bash {fname_bash_script_}')
+                                        os.remove(fname_block_file)
+
+                                        #prefix_del1 = os.path.basename(f'{tmp_fname_final_funcMR[:-7]}_r_')
+                                        #prefix_del2 = os.path.basename(f'{tmp_fname_final_funcMR[:-3]}_r')
+                                        #for f in os.listdir(fdir_derivatives_func):
+                                        #    if re.match(prefix_del1, f):
+                                        #        os.remove(f'{fdir_derivatives_func}/{f}')
+                                        #    if re.match(prefix_del2, f):
+                                        #        os.remove(f'{fdir_derivatives_func}/{f}')
 
 
-                    else:
-                        print('Preprocessed file for functional data does exist...')
+                        else:
+                            print('Preprocessed file for functional data does exist...')
 
 
-                    # Perform image quality metric analysis
-                    fname_par = (fdir_derivatives_func
-                                + '/' + str(run)[:-7]
-                                + '_st_mcf.par')
+                        # Perform image quality metric analysis
+                        fname_par = (fdir_derivatives_func
+                                    + '/' + str(run)[:-7]
+                                    + '_st_mcf.par')
 
-                    # Perform image quality metric analysis
-                    fname_tsnr0 = calc_tSNR(tmp_fname_funcMR, params)
-                    fname_tsnr1 = calc_tSNR(tmp_fname_final_funcMR, params)
+                        # Perform image quality metric analysis
+                        fname_tsnr0 = calc_tSNR(tmp_fname_funcMR, params)
+                        fname_tsnr1 = calc_tSNR(tmp_fname_final_funcMR, params)
 
-                    fname_plot0 = motion_evaluation(fname_par, fd_threshold=0.3)
-                    fname_plot1, tSNR_median1, ROI_label = get_tSNR(fname_tsnr0, params, doPlot=True)
-                    fname_plot2, tSNR_median2, ROI_label = get_tSNR(fname_tsnr1, params, doPlot=True)
+                        fname_plot0 = motion_evaluation(fname_par, fd_threshold=0.3)
+                        fname_plot1, tSNR_median1, ROI_label = get_tSNR(fname_tsnr0, params, doPlot=True)
+                        fname_plot2, tSNR_median2, ROI_label = get_tSNR(fname_tsnr1, params, doPlot=True)
 
-                    img0 = Image.open(fname_plot0)
-                    img1 = Image.open(fname_plot1)
-                    img2 = Image.open(fname_plot2)
+                        img0 = Image.open(fname_plot0)
+                        img1 = Image.open(fname_plot1)
+                        img2 = Image.open(fname_plot2)
 
-                    fdir_ALL_qc = f'{os.path.dirname(fname_par)}/QC/'
-                    fname_ALL_qc = f'QC_ALL_{os.path.basename(fname_par)[:-4]}.png'
-                    img_a = viz_concat_v([img0, img1, img2])
-                    img_a.save(( fdir_ALL_qc + fname_ALL_qc))
+                        fdir_ALL_qc = f'{os.path.dirname(fname_par)}/QC/'
+                        fname_ALL_qc = f'QC_ALL_{os.path.basename(fname_par)[:-4]}.png'
+                        img_a = viz_concat_v([img0, img1, img2])
+                        img_a.save(( fdir_ALL_qc + fname_ALL_qc))
 
 
     return print('[ DONE ]')
