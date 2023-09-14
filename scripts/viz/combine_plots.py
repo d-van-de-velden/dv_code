@@ -45,7 +45,6 @@ def viz_concat_v(imgN):
     height_counter = 0
     for img in imgN:
         dst.paste(img, (0, height_counter))
-        print(height_counter)
         height_counter = height_counter + img.height
 
 

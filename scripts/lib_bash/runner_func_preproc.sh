@@ -46,7 +46,7 @@ f="${filename_%.*}"
 echo "$f"
 file_name1="${output_dir}/${f}_st.nii" 
 
-#slicetimer -i $file_name -r 2 -o $file_name1
+slicetimer -i $file_name -r 2 -o $file_name1
 
 echo ""
 echo "#########################################################"
@@ -55,7 +55,7 @@ echo ""
 echo "Starting to apply FSL - MCFLIRT (Movement)"
 
 echo "Applying MCFLIRT on functional data: $file_name1"
-#mcflirt -in $file_name1 -plots
+mcflirt -in $file_name1 -plots
 
 echo ""
 echo "#########################################################"
@@ -88,7 +88,7 @@ EOF
 
 # Get distrortion maps
 echo "Make distortion maps from phase encoding map:"
-#topup --imain=AP-PA.nii.gz --datain=acq_param.txt --config=b02b0.cnf --out=AP_PA_topup
+topup --imain=AP-PA.nii.gz --datain=acq_param.txt --config=b02b0.cnf --out=AP_PA_topup
 
 echo ""
 echo "#########################################################"
@@ -105,7 +105,7 @@ file_name3="${output_dir}/${f2}_mcf_topUP.nii.gz"
 echo "${output_dir}/${file_name3}"
 
 echo "Applying top on functional data: $file_name2b"
-#applytopup --imain=$file_name2b --inindex=1 --datain=acq_param.txt --topup=AP_PA_topup --method=jac --out=$file_name3
+applytopup --imain=$file_name2b --inindex=1 --datain=acq_param.txt --topup=AP_PA_topup --method=jac --out=$file_name3
 
 echo ""
 echo "#########################################################"
