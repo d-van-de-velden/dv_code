@@ -41,7 +41,9 @@ def func_apply_glm(participants=None, params=None):
     print(
         f'Preprocessing of functional MR data is initiated for: {len(participants)} subjects'
     )
-
+    participants = participants[0:18]
+    ALL_subj_image_array = list()
+    all_sessions         = list()
     for iSubj in range(len(participants)):
         print(f'Identifying sessions from "derivatives/{participants[iSubj]}"/ ....')
         tmp_fdir_subj = params.get('fdir_proc_pre') + '/' + participants[iSubj]
@@ -50,6 +52,7 @@ def func_apply_glm(participants=None, params=None):
             sessions = os.listdir(tmp_fdir_subj)
             for session in sessions:
                 print(session)
+                all_sessions.append(sessions)
                 fdir_derivatives_func = (params.get('fdir_proc_pre')
                                         + '/' + participants[iSubj] 
                                         + '/' + session + '/func'
@@ -62,7 +65,7 @@ def func_apply_glm(participants=None, params=None):
                     runs = os.listdir(fdir_derivatives_func)
                     runs = get_only_nifti(runs, 1)
                     
-                    proc_lvl = ['_st_mcf_topUP.nii.gz']
+                    proc_lvl = ['_st_mcf_topUP_r_w.nii.gz']
 
                     runs[:] = [proc_stage for proc_stage in runs if any(item in proc_stage for item in proc_lvl)]
                     runs.sort()
@@ -115,12 +118,12 @@ def func_apply_glm(participants=None, params=None):
 
                             print('Load data for processing functional data for stimuli...')
                             # Load data
-                            func = nib.load(tmp_fname_final_funcMR)
-                            tr = RepetitionTime
+                            func    = nib.load(tmp_fname_final_funcMR)
+                            tr      = RepetitionTime
                             n_scans = func.shape[3]
                             
-                            anat=nib.load(tmp_fname_MR)
-                            v=pd.read_csv(eventspath,sep='\t')
+                            anat    = nib.load(tmp_fname_MR)
+                            events       = pd.read_csv(eventspath,sep='\t')
                             
                             baseline = {'onset': [events.onset[47] + events.duration[47]],
                                         'duration': [( n_scans * tr ) - events.onset[47] + events.duration[47]],
@@ -195,6 +198,7 @@ def func_apply_glm(participants=None, params=None):
                                                 + subjID + '/' + ses + '/'
                             )
                         check_make_dir(fdir_der_firstlvl_final)
+                        print("Average for each contrast over all runs")
                         for i, contrast_id in enumerate(contrast):
                             loadingBar(i, len(contrast), contrast_id)
                             str_contrast = contrast_id.replace(" - ", "_vs_")
@@ -222,10 +226,43 @@ def func_apply_glm(participants=None, params=None):
                             
                             avg_zmap_img = nib.Nifti1Image(avg_zmap, func.affine)
                             nib.save(img=avg_zmap_img, filename=fname_avg_zmap)
+
+
+    # Average all contrasts and runs of all sessions across subjects 
+    all_sessions = list( np.unique(all_sessions))
+    for session in all_sessions:
+        print(session)
+        fdir_group_firstlvl_final = ( params.get('fdir_proc') 
+                                + '/1st_level/Group/' 
+                                + session + '/'
+                            )
+        check_make_dir(fdir_group_firstlvl_final)
+        for i, contrast_id in enumerate(contrast):
+            loadingBar(i, len(contrast), contrast_id)
+            str_contrast = contrast_id.replace(" - ", "_vs_")
+            
+            ALL_subj_image_array = list()
+            subj_count = 0
+            for j, subjID in enumerate(participants):
+                tmp_fdir_firstlvl = ( params.get('fdir_proc') 
+                                        + '/1st_level/'
+                                        + subjID + '/' + ses + '/'
+                                    )
+                if os.path.exists(tmp_fdir_firstlvl):
+                    fname_zmap = tmp_fdir_firstlvl + f"{subjID}_{ses}_avg_{str_contrast}.nii"
+                    tmp_zmap   = nib.load(fname_zmap)
                     
+                    ALL_subj_image_array.append( tmp_zmap.get_fdata() )
+                    subj_count = subj_count +1
                             
+            ALL_subj_image_array = np.array(ALL_subj_image_array)
+            all_avg_zmap = np.mean(ALL_subj_image_array, axis=0)
+            fname_avg_zmap = fdir_group_firstlvl_final + f"GroupN{subj_count}_{ses}_avg_{str_contrast}.nii"
                             
-                                
+            all_avg_zmap_img = nib.Nifti1Image(all_avg_zmap, func.affine)
+            nib.save(img=all_avg_zmap_img, filename=fname_avg_zmap)
+
+
                             
 
     return
