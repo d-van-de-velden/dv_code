@@ -151,7 +151,7 @@ def motion_evaluation(fname_par=None, fd_threshold=0.3):
     return fname_plot
 
 
-def calc_tSNR(fname, params):
+def calc_tSNR(fname, fname_T1w, fname_parc, params):
     
     tmp_fname_func = os.path.splitext(os.path.basename(fname))[0]
     fname_func = os.path.splitext(os.path.basename(tmp_fname_func))[0]
@@ -159,7 +159,6 @@ def calc_tSNR(fname, params):
     idents  = fname_func.split('_')
     subjID  = idents[0]
     session = idents[1]
-    run     = idents[2]
 
     fdir_func_r  = (params.get('fdir_proc_pre') 
                     + '/' + subjID
@@ -183,9 +182,6 @@ def calc_tSNR(fname, params):
     
     print(f'# Calcualting tSNR for functional image \nFrom: mean / std \n   To: {fname_func_tSNR}')
     if os.system(f'FSL fslmaths {fname_func_mean} -div {fname_func_std} {fname_func_tSNR}') == 0: print('done successfully..')
-
-    
-    fname_T1w = f'{fdir_derivatives_anat}/{subjID}_{session}_T1w_nu.nii.gz'
     
     if os.path.exists(fname_T1w) == False:
         print(f'!! No anatomical derivatives present for [ {subjID} | {session} ] ')
@@ -199,7 +195,6 @@ def calc_tSNR(fname, params):
     if os.system(f'FSL flirt -in {fname_func_tSNR} -ref {fname_T1w} -out {fname_func_r_tSNR}') == 0: print('done successfully..')
     
     
-    fname_parc = f'{fdir_derivatives_anat}/{subjID}_{session}_T1w_aparc+aseg.nii.gz'
     parc = nib.load(fname_parc)
     dat_aparc = np.array(parc.dataobj)
     func_tSNR = nib.load(fname_func_r_tSNR)
@@ -222,6 +217,58 @@ def calc_tSNR(fname, params):
 
 
     return fname_func_r_tSNR
+
+
+def calc_tSNR_aligned(fname, fname_parc, params):
+    
+    tmp_fname_func = os.path.splitext(os.path.basename(fname))[0]
+    fname_func = os.path.splitext(os.path.basename(tmp_fname_func))[0]
+
+    idents  = fname_func.split('_')
+    subjID  = idents[0]
+    session = idents[1]
+
+    fdir_func_r  = (params.get('fdir_proc_pre') 
+                    + '/' + subjID
+                    + '/' + session
+                    + '/func'
+                    )
+
+    fname_func_mean = f'{fdir_func_r}/{fname_func}_mean.nii.gz'
+    fname_func_std = f'{fdir_func_r}/{fname_func}_std.nii.gz'
+    fname_func_tSNR = f'{fdir_func_r}/{fname_func}_tSNR.nii.gz'
+    fname_func_r_tSNR = f'{fdir_func_r}/{fname_func}_tSNR_r.nii.gz'
+    print(f'# Calcualting mean functional image \nFrom: {fname}\n   To: {fname_func_mean}')
+    if os.system(f'FSL fslmaths {fname} -Tmean {fname_func_mean}') == 0: print('done successfully..')
+    print(f'# Calcualting std functional image \nFrom: {fname}\n   To: {fname_func_std}')
+    if os.system(f'FSL fslmaths {fname} -Tstd {fname_func_std}') == 0: print('done successfully..')
+    
+    print(f'# Calcualting tSNR for functional image \nFrom: mean / std \n   To: {fname_func_tSNR}')
+    if os.system(f'FSL fslmaths {fname_func_mean} -div {fname_func_std} {fname_func_tSNR}') == 0: print('done successfully..')
+
+    
+    parc = nib.load(fname_parc)
+    dat_aparc = np.array(parc.dataobj)
+    func_tSNR = nib.load(fname_func_r_tSNR)
+    dat_func_tSNR = np.array(func_tSNR.dataobj)
+    dat_func_lh_tSNR = dat_func_tSNR
+    dat_func_lh_tSNR[dat_aparc < 1000 ] = 0    
+    dat_func_lh_tSNR[dat_aparc > 1037 ] = 0
+    
+    dat_func_tSNR = np.array(func_tSNR.dataobj)
+    dat_func_rh_tSNR = dat_func_tSNR
+    dat_func_rh_tSNR[dat_aparc < 2000 ] = 0
+    dat_func_rh_tSNR[dat_aparc > 2037 ] = 0
+
+    dat_func_tSNR2 = dat_func_lh_tSNR + dat_func_rh_tSNR
+    dat_func_tSNR[dat_func_tSNR == 0] = 'nan'
+    
+
+    tSNR_median = round( np.nanmedian( dat_func_tSNR ), 2)
+    print(f'The median tSNR in the grey matter is: {tSNR_median}')
+
+
+    return fname_func_r_tSNR, tSNR_median
 
 
 def get_tSNR(fname_tsnr, fname_parc, params, doPlot=False):

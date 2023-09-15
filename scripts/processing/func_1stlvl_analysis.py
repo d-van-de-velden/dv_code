@@ -91,21 +91,22 @@ def func_apply_glm(participants=None, params=None, smoothing_fwhm=8, tSNR_tresh=
                             if os.path.exists(tmp_fname_final_funcMR):
                                 print(f'Found functional data :\n   {tmp_fname_final_funcMR}.')
                             
+                            # Get anatomical data as nifti file
+                            tmp_fname_MR = fdir_derivatives_anat + f'/{subjID}_{ses}_T1w_nu_w.nii.gz'
+                            if os.path.exists(tmp_fname_MR):
+                                print(f'Found anatomical data :\n   {tmp_fname_MR}.')
+                                    
                             # Perform image quality metric analysis
-                            tmp_fname_tsnr = calc_tSNR(tmp_fname_final_funcMR, params)
                             fdir_derivatives_anat = (params.get('fdir_proc_pre')
                                 + '/' + subjID 
                                 + '/' + session + '/anat'
                                 )
                             fname_parc = f'{fdir_derivatives_anat}/{subjID}_{session}_T1w_aparc+aseg_w.nii.gz'
     
-                            tmp_fname_plot, tmp_tSNR_median, tmp_ROI_label = get_tSNR(tmp_fname_tsnr, fname_parc, params, doPlot=False)
                             
+                            tmp_, tmp_tSNR_median = calc_tSNR_aligned(tmp_fname_final_funcMR, fname_parc, params)
+                                
                             if tmp_tSNR_median[1] >= tSNR_tresh:
-                                # Get anatomical data as nifti file
-                                tmp_fname_MR = fdir_derivatives_anat + f'/{subjID}_{ses}_T1w_nu.nii.gz'
-                                if os.path.exists(tmp_fname_MR):
-                                    print(f'Found anatomical data :\n   {tmp_fname_MR}.')
                                 
                                 # Get motion parameters for functional data as par file
                                 tmp_fname_motion_funcMR = fdir_derivatives_func + '/' + run_reduced + '_st_mcf.par'

@@ -153,17 +153,14 @@ def do_func_preproc(participants=None, params=None,
                                     + '_st_mcf.par')
 
                         # Perform image quality metric analysis
-                        fname_tsnr0 = calc_tSNR(tmp_fname_funcMR, params)
-                        fname_tsnr1 = calc_tSNR(tmp_fname_final_funcMR, params)
+                        fname_T1w = f'{fdir_derivatives_anat}/{participants[iSubj]}_{session}_T1w_nu.nii.gz'
+                        fname_parc = f'{fdir_derivatives_anat}/{participants[iSubj]}_{session}_T1w_aparc+aseg.nii.gz'
+                        
+                        fname_tsnr0 = calc_tSNR(tmp_fname_funcMR, fname_T1w, fname_parc, params)
+                        fname_tsnr1 = calc_tSNR(tmp_fname_final_funcMR, fname_T1w, fname_parc, params)
 
                         fname_plot0 = motion_evaluation(fname_par, fd_threshold=0.3)
                         
-                        fdir_derivatives_anat = (params.get('fdir_proc_pre')
-                            + '/' + participants[iSubj] 
-                            + '/' + session + '/anat'
-                            )
-                        fname_parc = f'{fdir_derivatives_anat}/{participants[iSubj]}_{session}_T1w_aparc+aseg.nii.gz'
-    
                         fname_plot1, tSNR_median1, ROI_label = get_tSNR(fname_tsnr0, fname_parc, params, doPlot=True)
                         fname_plot2, tSNR_median2, ROI_label = get_tSNR(fname_tsnr1, fname_parc, params, doPlot=True)
 
