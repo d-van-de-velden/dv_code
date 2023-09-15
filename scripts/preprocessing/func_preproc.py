@@ -142,14 +142,6 @@ def do_func_preproc(participants=None, params=None,
                                             os.system(f'xterm -geometry 70x80 -e bash {fname_bash_script_}')
                                         os.remove(fname_block_file)
 
-                                        #prefix_del1 = os.path.basename(f'{tmp_fname_final_funcMR[:-7]}_r_')
-                                        #prefix_del2 = os.path.basename(f'{tmp_fname_final_funcMR[:-3]}_r')
-                                        #for f in os.listdir(fdir_derivatives_func):
-                                        #    if re.match(prefix_del1, f):
-                                        #        os.remove(f'{fdir_derivatives_func}/{f}')
-                                        #    if re.match(prefix_del2, f):
-                                        #        os.remove(f'{fdir_derivatives_func}/{f}')
-
 
                         else:
                             print('Preprocessed file for functional data does exist...')
@@ -165,8 +157,15 @@ def do_func_preproc(participants=None, params=None,
                         fname_tsnr1 = calc_tSNR(tmp_fname_final_funcMR, params)
 
                         fname_plot0 = motion_evaluation(fname_par, fd_threshold=0.3)
-                        fname_plot1, tSNR_median1, ROI_label = get_tSNR(fname_tsnr0, params, doPlot=True)
-                        fname_plot2, tSNR_median2, ROI_label = get_tSNR(fname_tsnr1, params, doPlot=True)
+                        
+                        fdir_derivatives_anat = (params.get('fdir_proc_pre')
+                            + '/' + participants[iSubj] 
+                            + '/' + session + '/anat'
+                            )
+                        fname_parc = f'{fdir_derivatives_anat}/{participants[iSubj]}_{session}_T1w_aparc+aseg.nii.gz'
+    
+                        fname_plot1, tSNR_median1, ROI_label = get_tSNR(fname_tsnr0, fname_parc, params, doPlot=True)
+                        fname_plot2, tSNR_median2, ROI_label = get_tSNR(fname_tsnr1, fname_parc, params, doPlot=True)
 
                         img0 = Image.open(fname_plot0)
                         img1 = Image.open(fname_plot1)

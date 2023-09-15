@@ -104,7 +104,7 @@ echo "${output_dir}/${file_name2b}"
 file_name3="${output_dir}/${f2}_mcf_topUP.nii.gz"
 echo "${output_dir}/${file_name3}"
 
-echo "Applying top on functional data: $file_name2b"
+echo "Applying topUP on functional data: $file_name2b"
 applytopup --imain=$file_name2b --inindex=1 --datain=acq_param.txt --topup=AP_PA_topup --method=jac --out=$file_name3
 
 echo ""
@@ -206,7 +206,7 @@ echo ""
 echo "Apply warp field to functional data"
 echo "IN  -> $file_name3"
 echo "OUT -> $file_func_out"
-applywarp -i $file_name3 -o $file_func_out -r $file_name_MNI_func -w $anat_warp -m $file_name_MNI_func_brainmask --premat=func2struct.mat
+applywarp -i $file_name3 -o $file_func_out -r $file_name_MNI_func -w $anat_warp -m $file_name_MNI_func_brainmask --premat=$file_func_out_matrix
 
 # Apply warp field to c1 data
 echo ""

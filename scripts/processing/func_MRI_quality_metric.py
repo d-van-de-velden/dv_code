@@ -224,7 +224,7 @@ def calc_tSNR(fname, params):
     return fname_func_r_tSNR
 
 
-def get_tSNR(fname_tsnr, params, doPlot=False):
+def get_tSNR(fname_tsnr, fname_parc, params, doPlot=False):
 #
 #
 #
@@ -236,11 +236,6 @@ def get_tSNR(fname_tsnr, params, doPlot=False):
     subjID  = idents[0]
     session = idents[1]
     
-    fdir_derivatives_anat = (params.get('fdir_proc_pre')
-                            + '/' + subjID 
-                            + '/' + session + '/anat'
-                            )
-    fname_parc = f'{fdir_derivatives_anat}/{subjID}_{session}_T1w_aparc+aseg.nii.gz'
     parc = nib.load(fname_parc)
     dat_aparc = np.array(parc.dataobj)
     
