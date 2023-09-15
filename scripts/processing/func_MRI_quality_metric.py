@@ -245,7 +245,7 @@ def calc_tSNR_aligned(fname, fname_parc, params):
     os.system(f'FSL fslmaths {fname_func_mean} -div {fname_func_std} {fname_func_tSNR}')
 
     fname_resample_IN = fname_parc
-    fname_resample_OUT = fname_parc.replace('.nii.gz', '_resampled_nii.gz')
+    fname_resample_OUT = fname_parc.replace('.nii.gz', '_resampled.nii.gz')
     
     os.system(f'FSL flirt -in {fname_resample_IN} -ref {fname_func_tSNR} -out {fname_resample_OUT} -applyxfm')
     
