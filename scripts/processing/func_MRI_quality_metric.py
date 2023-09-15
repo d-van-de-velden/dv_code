@@ -268,7 +268,7 @@ def calc_tSNR_aligned(fname, fname_parc, params):
 
     tSNR_median = round( np.nanmedian( dat_func_tSNR ), 2)
     print(f'The median tSNR in the grey matter is: {tSNR_median}')
-
+    os.remove(fname_resample_OUT)
 
     return tSNR_median
 

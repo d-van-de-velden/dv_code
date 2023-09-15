@@ -106,7 +106,7 @@ def func_apply_glm(participants=None, params=None, smoothing_fwhm=8, tSNR_tresh=
                             
                             tmp_tSNR_median = calc_tSNR_aligned(tmp_fname_final_funcMR, fname_parc, params)
                                 
-                            if tmp_tSNR_median[1] >= tSNR_tresh:
+                            if tmp_tSNR_median >= tSNR_tresh:
                                 
                                 # Get motion parameters for functional data as par file
                                 tmp_fname_motion_funcMR = fdir_derivatives_func + '/' + run_reduced + '_st_mcf.par'
