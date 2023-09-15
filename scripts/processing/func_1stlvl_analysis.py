@@ -10,7 +10,7 @@
 
 import json
 import os
-from dv_code.scripts.processing.func_MRI_quality_metric import calc_tSNR, get_tSNR
+from dv_code.scripts.processing.func_MRI_quality_metric import calc_tSNR_aligned
 
 import nibabel as nib
 import numpy as np
@@ -104,7 +104,7 @@ def func_apply_glm(participants=None, params=None, smoothing_fwhm=8, tSNR_tresh=
                             fname_parc = f'{fdir_derivatives_anat}/{subjID}_{session}_T1w_aparc+aseg_w.nii.gz'
     
                             
-                            tmp_, tmp_tSNR_median = calc_tSNR_aligned(tmp_fname_final_funcMR, fname_parc, params)
+                            tmp_tSNR_median = calc_tSNR_aligned(tmp_fname_final_funcMR, fname_parc, params)
                                 
                             if tmp_tSNR_median[1] >= tSNR_tresh:
                                 

@@ -208,7 +208,7 @@ def calc_tSNR(fname, fname_T1w, fname_parc, params):
     dat_func_rh_tSNR[dat_aparc < 2000 ] = 0
     dat_func_rh_tSNR[dat_aparc > 2037 ] = 0
 
-    dat_func_tSNR2 = dat_func_lh_tSNR + dat_func_rh_tSNR
+    dat_func_tSNR = dat_func_lh_tSNR + dat_func_rh_tSNR
     dat_func_tSNR[dat_func_tSNR == 0] = 'nan'
     
 
@@ -220,6 +220,8 @@ def calc_tSNR(fname, fname_T1w, fname_parc, params):
 
 
 def calc_tSNR_aligned(fname, fname_parc, params):
+    
+    print(f'# Calcualting tSNR...')
     
     tmp_fname_func = os.path.splitext(os.path.basename(fname))[0]
     fname_func = os.path.splitext(os.path.basename(tmp_fname_func))[0]
@@ -237,19 +239,19 @@ def calc_tSNR_aligned(fname, fname_parc, params):
     fname_func_mean = f'{fdir_func_r}/{fname_func}_mean.nii.gz'
     fname_func_std = f'{fdir_func_r}/{fname_func}_std.nii.gz'
     fname_func_tSNR = f'{fdir_func_r}/{fname_func}_tSNR.nii.gz'
-    fname_func_r_tSNR = f'{fdir_func_r}/{fname_func}_tSNR_r.nii.gz'
-    print(f'# Calcualting mean functional image \nFrom: {fname}\n   To: {fname_func_mean}')
-    if os.system(f'FSL fslmaths {fname} -Tmean {fname_func_mean}') == 0: print('done successfully..')
-    print(f'# Calcualting std functional image \nFrom: {fname}\n   To: {fname_func_std}')
-    if os.system(f'FSL fslmaths {fname} -Tstd {fname_func_std}') == 0: print('done successfully..')
+    os.system(f'FSL fslmaths {fname} -Tmean {fname_func_mean}')
+    os.system(f'FSL fslmaths {fname} -Tstd {fname_func_std}')
     
-    print(f'# Calcualting tSNR for functional image \nFrom: mean / std \n   To: {fname_func_tSNR}')
-    if os.system(f'FSL fslmaths {fname_func_mean} -div {fname_func_std} {fname_func_tSNR}') == 0: print('done successfully..')
+    os.system(f'FSL fslmaths {fname_func_mean} -div {fname_func_std} {fname_func_tSNR}')
 
+    fname_resample_IN = fname_parc
+    fname_resample_OUT = fname_parc.replace('.nii.gz', '_resampled_nii.gz')
     
-    parc = nib.load(fname_parc)
+    os.system(f'FSL flirt -in {fname_resample_IN} -ref {fname_func_tSNR} -out {fname_resample_OUT} -applyxfm')
+    
+    parc = nib.load(fname_resample_OUT)
     dat_aparc = np.array(parc.dataobj)
-    func_tSNR = nib.load(fname_func_r_tSNR)
+    func_tSNR = nib.load(fname_func_tSNR)
     dat_func_tSNR = np.array(func_tSNR.dataobj)
     dat_func_lh_tSNR = dat_func_tSNR
     dat_func_lh_tSNR[dat_aparc < 1000 ] = 0    
@@ -260,7 +262,7 @@ def calc_tSNR_aligned(fname, fname_parc, params):
     dat_func_rh_tSNR[dat_aparc < 2000 ] = 0
     dat_func_rh_tSNR[dat_aparc > 2037 ] = 0
 
-    dat_func_tSNR2 = dat_func_lh_tSNR + dat_func_rh_tSNR
+    dat_func_tSNR = dat_func_lh_tSNR + dat_func_rh_tSNR
     dat_func_tSNR[dat_func_tSNR == 0] = 'nan'
     
 
@@ -268,7 +270,7 @@ def calc_tSNR_aligned(fname, fname_parc, params):
     print(f'The median tSNR in the grey matter is: {tSNR_median}')
 
 
-    return fname_func_r_tSNR, tSNR_median
+    return tSNR_median
 
 
 def get_tSNR(fname_tsnr, fname_parc, params, doPlot=False):
