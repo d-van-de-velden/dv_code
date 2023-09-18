@@ -39,7 +39,8 @@ print(
     '   |   |         ____/ \ |      \ \n'+
     '   |   |_____   /      | |  |_| |\n'+
     '   |         \ |  |_|  | |      |\n'+
-    '    \________/  \___/|_/ \______/  version: ' + __version__
+    '    \________/  \___/|_/ \______/  version: ' + __version__)
+    
 setup(
     name='dv_code',
     version=__version__,
