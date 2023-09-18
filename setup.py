@@ -2,7 +2,7 @@ import os
 from setuptools import setup, find_packages
 
 
-__version__ = '0.4.95'
+__version__ = '0.4.96'
 
 def say_welcome(vers_info=None):
     """ Provides user with welcome image
