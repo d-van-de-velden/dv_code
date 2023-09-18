@@ -523,7 +523,7 @@ def func_apply_glm(participants=None, params=None, smoothing_fwhm=8):
                                 tmp_zmap = nib.load(fname_zmap)
                                 image_array.append(tmp_zmap.get_fdata())
 
-                                fname_pmap = fdir_der_firstlvl + f"{subjID}_{ses}_{runID}_{str_contrast}_p_value.nii"
+                                fname_pmap = fdir_der_firstlvl + f"{subjID}_{ses}_{runID}_{str_contrast}_pvalue.nii"
                                 tmp_pmap = nib.load(fname_pmap)
                                 image_array2.append(tmp_pmap.get_fdata())
 
