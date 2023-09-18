@@ -46,18 +46,18 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
     check_make_dir(params.get('fdir_proc_pre'))
         
     print(
-        f'Preprocessing of functional MR data is initiated for: {len(participants)} subjects'
+        f'####\nPreprocessing of functional MR data is initiated for: {len(participants)} subjects\n####'
     )
 
     all_sessions = list()
     for iSubj in range(len(participants)):
-        print(f'Identifying sessions from "derivatives/{participants[iSubj]}"/ ....')
+        print(f'# Identifying sessions from "derivatives/{participants[iSubj]}"/ ....')
         tmp_fdir_subj = params.get('fdir_proc_pre') + '/' + participants[iSubj]
 
         if os.path.exists(tmp_fdir_subj):
             sessions = os.listdir(tmp_fdir_subj)
             for session in sessions:
-                print(session)
+                print(f'  # Performing calculation on session:   {session}')
                 all_sessions.append(sessions)
                 fdir_derivatives_func = (params.get('fdir_proc_pre')
                                         + '/' + participants[iSubj] 
@@ -75,7 +75,6 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
 
                     runs[:] = [proc_stage for proc_stage in runs if any(item in proc_stage for item in proc_lvl)]
                     runs.sort()
-                    print(runs)
                     if len(runs) > 0:
                         for run in runs:
                             
@@ -83,18 +82,18 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
                             subjID = indices[0]
                             ses = indices[1]
                             runID = indices[2]
-                            
+                            print(f'    # Performing calculation on run:   {runID}')
                             run_reduced = run.replace(proc_lvl[0], "")
                             
                             # Get functional data as nifti file
                             tmp_fname_final_funcMR = fdir_derivatives_func + '/' + run
                             if os.path.exists(tmp_fname_final_funcMR):
-                                print(f'Found functional data :\n   {tmp_fname_final_funcMR}.')
+                                print(f'     Found functional data :   {tmp_fname_final_funcMR}.')
                             
                             # Get anatomical data as nifti file
                             tmp_fname_MR = fdir_derivatives_anat + f'/{subjID}_{ses}_T1w_nu_w.nii.gz'
                             if os.path.exists(tmp_fname_MR):
-                                print(f'Found anatomical data :\n   {tmp_fname_MR}.')
+                                print(f'     Found anatomical data :   {tmp_fname_MR}.')
                                     
                             # Perform image quality metric analysis
                             fdir_derivatives_anat = (params.get('fdir_proc_pre')
@@ -111,7 +110,7 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
                                 # Get motion parameters for functional data as par file
                                 tmp_fname_motion_funcMR = fdir_derivatives_func + '/' + run_reduced + '_st_mcf.par'
                                 if os.path.exists(tmp_fname_motion_funcMR):
-                                    print(f'Found motion parameter data :\n   {tmp_fname_motion_funcMR}.')
+                                    print(f'     Found motion parameter data :   {tmp_fname_motion_funcMR}.')
                                 
                                 
                                 # Get json file to functional data
@@ -120,21 +119,21 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
                                 tmp_fname_raw_funcMR_json = (tmp_fdir_func
                                                             + '/' + run_reduced + '.json')
                                 if os.path.exists(tmp_fname_raw_funcMR_json):
-                                    print(f'Found .json file for functional data :\n   {tmp_fname_raw_funcMR_json}.')
+                                    print(f'     Found .json file for functional data :   {tmp_fname_raw_funcMR_json}.')
                                 with open(f'{tmp_fname_raw_funcMR_json}') as f:
                                     func_json = json.load(f)
                                 RepetitionTime = func_json.get('RepetitionTime')
-                                print(f'   Found TR of : {RepetitionTime}s for functional data.')
+                                print(f'        Found TR of : {RepetitionTime}s for functional data.')
                                 
                                 # Get event file to functional data
                                 eventspath = (tmp_fdir_func 
                                             + '/' + run_reduced
                                             + '.tsv')
                                 if os.path.exists(eventspath):
-                                    print(f'Found evt data for functional data : {eventspath}.')
+                                    print(f'     Found evt data for functional data : {eventspath}.')
                                 
 
-                                print('Load data for processing functional data for stimuli...')
+                                print('     # Load data for processing functional data for stimuli...')
                                 # Load data
                                 func    = nib.load(tmp_fname_final_funcMR)
                                 tr      = RepetitionTime
@@ -176,7 +175,7 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
                                     smoothing_fwhm=smoothing_fwhm)
 
                                 # fit model
-                                print("Fitting a GLM")
+                                print("     # Fitting a GLM")
                                 fmri_maps = fmri_glm.fit(func,
                                                         design_matrices=dm)
                                 
@@ -187,7 +186,7 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
                                 )
                                 check_make_dir(fdir_der_firstlvl)
                                 
-                                print("Make nifti for each contrast")
+                                print("     # Make nifti for each contrast")
                                 # Make nifti for each contrast
                                 for i, contrast_id in enumerate(contrast):
                                     loadingBar(i, len(contrast), contrast_id)
@@ -200,7 +199,7 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
                                     fname_pmap = fdir_der_firstlvl + f"{subjID}_{ses}_{runID}_{str_contrast}_tSNR{tSNR_tresh}_pvalue.nii"
                                     nib.save(p_map, fname_pmap)
                                     
-                                
+                                print("     # Done\n")
                                 #print("Reporting a GLM")
                                 #z_cuts = np.linspace(-45,90,25)
                                 #report = make_glm_report(fmri_maps,
@@ -244,7 +243,7 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
                                     tmp_zmap   = nib.load(fname_zmap)
                                     image_array.append( tmp_zmap.get_fdata() )
                                 
-                                fname_pmap = fdir_der_firstlvl + f"{subjID}_{ses}_{runID}_{str_contrast}_tSNR{tSNR_tresh}_p_value.nii"
+                                fname_pmap = fdir_der_firstlvl + f"{subjID}_{ses}_{runID}_{str_contrast}_tSNR{tSNR_tresh}_pvalue.nii"
                                 if os.path.exists(fname_pmap):
                                     tmp_pmap   = nib.load(fname_pmap)
                                     image_array2.append( tmp_pmap.get_fdata() )
@@ -343,18 +342,18 @@ def func_apply_glm(participants=None, params=None, smoothing_fwhm=8):
     check_make_dir(params.get('fdir_proc_pre'))
         
     print(
-        f'Preprocessing of functional MR data is initiated for: {len(participants)} subjects'
+        f'####\nPreprocessing of functional MR data is initiated for: {len(participants)} subjects\n####'
     )
 
     all_sessions = list()
     for iSubj in range(len(participants)):
-        print(f'Identifying sessions from "derivatives/{participants[iSubj]}"/ ....')
+        print(f'# Identifying sessions from "derivatives/{participants[iSubj]}"/ ....')
         tmp_fdir_subj = params.get('fdir_proc_pre') + '/' + participants[iSubj]
 
         if os.path.exists(tmp_fdir_subj):
             sessions = os.listdir(tmp_fdir_subj)
             for session in sessions:
-                print(session)
+                print(f'  # Performing calculation on session:   {session}')
                 all_sessions.append(sessions)
                 fdir_derivatives_func = (params.get('fdir_proc_pre')
                                         + '/' + participants[iSubj] 
@@ -372,7 +371,6 @@ def func_apply_glm(participants=None, params=None, smoothing_fwhm=8):
 
                     runs[:] = [proc_stage for proc_stage in runs if any(item in proc_stage for item in proc_lvl)]
                     runs.sort()
-                    print(runs)
                     if len(runs) > 0:
                         for run in runs:
                             
@@ -380,24 +378,24 @@ def func_apply_glm(participants=None, params=None, smoothing_fwhm=8):
                             subjID = indices[0]
                             ses = indices[1]
                             runID = indices[2]
-                            
+                            print(f'    # Performing calculation on run:   {runID}')
                             run_reduced = run.replace(proc_lvl[0], "")
                             
                             # Get functional data as nifti file
                             tmp_fname_final_funcMR = fdir_derivatives_func + '/' + run
                             if os.path.exists(tmp_fname_final_funcMR):
-                                print(f'Found functional data :\n   {tmp_fname_final_funcMR}.')
+                                print(f'     Found functional data :   {tmp_fname_final_funcMR}.')
                             
                             # Get anatomical data as nifti file
                             tmp_fname_MR = fdir_derivatives_anat + f'/{subjID}_{ses}_T1w_nu_w.nii.gz'
                             if os.path.exists(tmp_fname_MR):
-                                print(f'Found anatomical data :\n   {tmp_fname_MR}.')
+                                print(f'     Found anatomical data :   {tmp_fname_MR}.')
                                     
                             # Get motion parameters for functional data as par file
                             tmp_fname_motion_funcMR = fdir_derivatives_func + '/' + run_reduced + '_st_mcf.par'
                             
                             if os.path.exists(tmp_fname_motion_funcMR):
-                                print(f'Found motion parameter data :\n   {tmp_fname_motion_funcMR}.')
+                                print(f'     Found motion parameter data :   {tmp_fname_motion_funcMR}.')
                                 
                             # Get json file to functional data
                             tmp_fdir_subj = params.get(
@@ -407,26 +405,26 @@ def func_apply_glm(participants=None, params=None, smoothing_fwhm=8):
                                                             + '/' + run_reduced + '.json')
                             
                             if os.path.exists(tmp_fname_raw_funcMR_json):
-                                print(
-                                        f'Found .json file for functional data :\n   {tmp_fname_raw_funcMR_json}.')
+                                print(f'     Found .json file for functional data :   {tmp_fname_raw_funcMR_json}.')
+
                                 with open(f'{tmp_fname_raw_funcMR_json}') as f:
                                     func_json = json.load(f)
                                     
                             RepetitionTime = func_json.get('RepetitionTime')
-                            print(
-                                f'   Found TR of : {RepetitionTime}s for functional data.')
+                            print(f'        Found TR of : {RepetitionTime}s for functional data.')
+
 
                             # Get event file to functional data
                             eventspath = (tmp_fdir_func
                                         + '/' + run_reduced
                                         + '.tsv')
                             if os.path.exists(eventspath):
-                                print(
-                                    f'Found evt data for functional data : {eventspath}.')
+                                print(f'     Found evt data for functional data : {eventspath}.')
 
-                            print(
-                                'Load data for processing functional data for stimuli...')
+
+
                             # Load data
+                            print('     # Load data for processing functional data for stimuli...')
                             func = nib.load(tmp_fname_final_funcMR)
                             tr = RepetitionTime
                             n_scans = func.shape[3]
@@ -468,7 +466,7 @@ def func_apply_glm(participants=None, params=None, smoothing_fwhm=8):
                                 smoothing_fwhm=smoothing_fwhm)
 
                             # fit model
-                            print("Fitting a GLM")
+                            print("     # Fitting a GLM")
                             fmri_maps = fmri_glm.fit(func,
                                                     design_matrices=dm)
 
@@ -478,7 +476,7 @@ def func_apply_glm(participants=None, params=None, smoothing_fwhm=8):
                                                 )
                             check_make_dir(fdir_der_firstlvl)
 
-                            print("Make nifti for each contrast")
+                            print("     # Make nifti for each contrast")
                             # Make nifti for each contrast
                             for i, contrast_id in enumerate(contrast):
                                 loadingBar(i, len(contrast), contrast_id)
@@ -494,6 +492,7 @@ def func_apply_glm(participants=None, params=None, smoothing_fwhm=8):
                                 fname_pmap = fdir_der_firstlvl + f"{subjID}_{ses}_{runID}_{str_contrast}_pvalue.nii"
                                 nib.save(p_map, fname_pmap)
 
+                            print("     # Done\n")
 
                         # Average all contrasts and runs
                         fdir_der_firstlvl_final = (params.get('fdir_proc')
