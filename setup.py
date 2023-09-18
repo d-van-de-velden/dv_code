@@ -5,23 +5,8 @@ from setuptools import setup, find_packages
 __version__ = '0.4.96'
 
 
-def package_tree(pkgroot):
-    """Get the submodule list."""
-    # adapted from mne-python
-    path = os.path.dirname(__file__)
-    subdirs = [os.path.relpath(i[0], path).replace(os.path.sep, '.')
-    for i in os.walk(os.path.join(path, pkgroot))
-        if '__init__.py' in i[2]]
-    
-    say_welcome(vers_info=__version__)
-    
-    return sorted(subdirs)
-
-############################################################################
-with open("README.md", "r", encoding="utf-8") as fh:
-    long_description = fh.read()
-
-print(
+def say_welcome(vers_info=None)
+    print(
     '       ____\n'+
     '     /     \  __               ___    __\n'+
     '    /       ||  |             /__/   |  |\n'+
@@ -40,6 +25,25 @@ print(
     '   |   |_____   /      | |  |_| |\n'+
     '   |         \ |  |_|  | |      |\n'+
     '    \________/  \___/|_/ \______/  version: ' + __version__)
+    return
+
+
+def package_tree(pkgroot):
+    """Get the submodule list."""
+    # adapted from mne-python
+    path = os.path.dirname(__file__)
+    subdirs = [os.path.relpath(i[0], path).replace(os.path.sep, '.')
+    for i in os.walk(os.path.join(path, pkgroot))
+        if '__init__.py' in i[2]]
+    
+    say_welcome(vers_info=__version__)
+    
+    return sorted(subdirs)
+
+############################################################################
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
+
     
 setup(
     name='dv_code',
@@ -51,7 +55,7 @@ setup(
     license='BSD (3-clause)',
     packages=find_packages(),
     install_requires=[
-        'pyocclient',
+        'pyocclient','numpy'
         ],
     
 )
