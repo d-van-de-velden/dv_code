@@ -4,40 +4,6 @@ from setuptools import setup, find_packages
 
 __version__ = '0.4.96'
 
-def say_welcome(vers_info=None):
-    """ Provides user with welcome image
-
-    Parameters
-    ----------
-    version : str
-    Current version of SkeideLab Script repository.
-
-    Returns
-    -------
-    [] : String Output
-    """
-    print(
-    '       ____\n'+
-    '     /     \  __               ___    __\n'+
-    '    /       ||  |             /__/   |  |\n'+
-    '   /    ___/ |  | __  ______  __     |  | ______\n'+
-    '   \   |___  |  |/ / |      ||  | ___|  ||      |\n'+
-    '    \___   \ |    /  |  |_| ||  ||      ||  |_| |\n'+
-    '       /   \ |    \  |   ___||  || |_|  ||   ___|\n'+
-    '    __/    / |  |\ \ |  |___ |  ||      ||  |___\n'+
-    '  /_______/  |__| \_\|______||__||______||______|\n'+
-    '    ___                   __\n'+
-    '   |   |                 |  |\n'+
-    '   |   |                 |  |\n'+
-    '   |   |                 |  |\n'+
-    '   |   |              _  |  |___\n'+
-    '   |   |         ____/ \ |      \ \n'+
-    '   |   |_____   /      | |  |_| |\n'+
-    '   |         \ |  |_|  | |      |\n'+
-    '    \________/  \___/|_/ \______/  version: ' + vers_info
-    )
-    return
-
 
 def package_tree(pkgroot):
     """Get the submodule list."""
@@ -55,7 +21,25 @@ def package_tree(pkgroot):
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-
+print(
+    '       ____\n'+
+    '     /     \  __               ___    __\n'+
+    '    /       ||  |             /__/   |  |\n'+
+    '   /    ___/ |  | __  ______  __     |  | ______\n'+
+    '   \   |___  |  |/ / |      ||  | ___|  ||      |\n'+
+    '    \___   \ |    /  |  |_| ||  ||      ||  |_| |\n'+
+    '       /   \ |    \  |   ___||  || |_|  ||   ___|\n'+
+    '    __/    / |  |\ \ |  |___ |  ||      ||  |___\n'+
+    '  /_______/  |__| \_\|______||__||______||______|\n'+
+    '    ___                   __\n'+
+    '   |   |                 |  |\n'+
+    '   |   |                 |  |\n'+
+    '   |   |                 |  |\n'+
+    '   |   |              _  |  |___\n'+
+    '   |   |         ____/ \ |      \ \n'+
+    '   |   |_____   /      | |  |_| |\n'+
+    '   |         \ |  |_|  | |      |\n'+
+    '    \________/  \___/|_/ \______/  version: ' + __version__
 setup(
     name='dv_code',
     version=__version__,
