@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 __version__ = '0.4.96'
 
 
-def say_welcome(vers_info=None)
+def say_welcome(vers_info=None):
     print(
     '       ____\n'+
     '     /     \  __               ___    __\n'+
