@@ -1,7 +1,12 @@
-# Authors (alphabetical order):
-#          Daniel van de Velden <daniel.vandevelden@yahoo.de>
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Authors: Daniel van de Velden (d.vandevelden@yahoo.de)
 #
-# License: Simplified BSD
+# License: BSD (3-clause)
+# 
+# 
+#
+###############################################################
 
 
 from . import combine_plots
