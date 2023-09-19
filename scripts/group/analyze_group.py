@@ -63,7 +63,8 @@ def overview_tSNR(participants=None, params=None, tSNR_threshold=35, N_runsOK=2)
                                     + '/' + participants[iSubj] 
                                     + '/' + session + '/anat'
                                     )
-                tmp_fname_T1w = f'{fdir_derivatives_anat}/{participants[iSubj]}_{session}_T1w_nu.nii.gz'
+                tmp_fname_T1w  = f'{fdir_derivatives_anat}/{participants[iSubj]}_{session}_T1w_nu.nii.gz'
+                tmp_fname_parc = f'{fdir_derivatives_anat}/{participants[iSubj]}_{session}_T1w_aparc+aseg.nii.gz'
 
             tSNR_median_across_runs_raw     = []
             tSNR_median_across_runs_preproc = []
@@ -78,12 +79,12 @@ def overview_tSNR(participants=None, params=None, tSNR_threshold=35, N_runsOK=2)
 
                 fname_func_tSNR = f'{fdir_derivatives_func}/{fname_func}_tSNR_r.nii.gz'
                 if os.path.exists(fname_func_tSNR):
-                    _, tSNR_median, _ = get_tSNR(fname_func_tSNR, params)
+                    _, tSNR_median, _ = get_tSNR(fname_func_tSNR, tmp_fname_parc,  params)
 
 
                 fname_func_r_tSNR = f'{fdir_derivatives_func}/{fname_func}_st_mcf_topUP_tSNR_r.nii.gz'
                 if os.path.exists(fname_func_r_tSNR):
-                    _, tSNR_median1, _ = get_tSNR(fname_func_r_tSNR, params)
+                    _, tSNR_median1, _ = get_tSNR(fname_func_r_tSNR, tmp_fname_parc, params)
 
 
                 ALL_tSNR_median.extend(
