@@ -24,21 +24,7 @@ from nilearn.glm.first_level import (FirstLevelModel,
 from nilearn.reporting import make_glm_report
 
 
-def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8, tSNR_tresh=30):
-    
-    contrast = ['unimodal_images - unimodal_audios',
-                'unimodal_audios - unimodal_images',
-                'congruent - incongruent',
-                'incongruent - congruent',
-                'unimodal_images - baseline',
-                'unimodal_audios - baseline',
-                'congruent - baseline',
-                'incongruent - baseline',
-                'unimodal_images - null_event',
-                'unimodal_audios - null_event',
-                'congruent - null_event',
-                'incongruent - null_event',
-                'baseline', 'null_event']
+def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8, tSNR_tresh=30, contrast=None):
     
     
     if participants is None:
@@ -195,9 +181,9 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
                                     fname_zmap = fdir_der_firstlvl + f"{subjID}_{ses}_{runID}_{str_contrast}_tSNR{tSNR_tresh}_zscore.nii"
                                     nib.save(z_map, fname_zmap)
                                     
-                                    p_map = fmri_maps.compute_contrast(contrast_id, output_type="p_value")
-                                    fname_pmap = fdir_der_firstlvl + f"{subjID}_{ses}_{runID}_{str_contrast}_tSNR{tSNR_tresh}_pvalue.nii"
-                                    nib.save(p_map, fname_pmap)
+                                    #p_map = fmri_maps.compute_contrast(contrast_id, output_type="p_value")
+                                    #fname_pmap = fdir_der_firstlvl + f"{subjID}_{ses}_{runID}_{str_contrast}_tSNR{tSNR_tresh}_pvalue.nii"
+                                    #nib.save(p_map, fname_pmap)
                                     
                                 print("     # Done\n")
                                 #print("Reporting a GLM")
@@ -243,10 +229,10 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
                                     tmp_zmap   = nib.load(fname_zmap)
                                     image_array.append( tmp_zmap.get_fdata() )
                                 
-                                fname_pmap = fdir_der_firstlvl + f"{subjID}_{ses}_{runID}_{str_contrast}_tSNR{tSNR_tresh}_pvalue.nii"
-                                if os.path.exists(fname_pmap):
-                                    tmp_pmap   = nib.load(fname_pmap)
-                                    image_array2.append( tmp_pmap.get_fdata() )
+                                #fname_pmap = fdir_der_firstlvl + f"{subjID}_{ses}_{runID}_{str_contrast}_tSNR{tSNR_tresh}_pvalue.nii"
+                                #if os.path.exists(fname_pmap):
+                                #    tmp_pmap   = nib.load(fname_pmap)
+                                #    image_array2.append( tmp_pmap.get_fdata() )
                             
                             
                             if len(image_array) > 0:
@@ -257,13 +243,13 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
                                 avg_zmap_img = nib.Nifti1Image(avg_zmap, func.affine)
                                 nib.save(img=avg_zmap_img, filename=fname_avg_zmap)
                             
-                            if len(image_array2) > 0:
-                                image_array2 = np.array(image_array2)
-                                avg_pmap = np.mean(image_array2, axis=0)
-                                fname_avg_pmap = fdir_der_firstlvl_final + f"{subjID}_{ses}_avg_p_{str_contrast}_tSNR{tSNR_tresh}.nii"
+                            #if len(image_array2) > 0:
+                            #    image_array2 = np.array(image_array2)
+                            #    avg_pmap = np.mean(image_array2, axis=0)
+                            #    fname_avg_pmap = fdir_der_firstlvl_final + f"{subjID}_{ses}_avg_p_{str_contrast}_tSNR{tSNR_tresh}.nii"
                                 
-                                avg_pmap_img = nib.Nifti1Image(avg_pmap, func.affine)
-                                nib.save(img=avg_pmap_img, filename=fname_avg_pmap)
+                            #    avg_pmap_img = nib.Nifti1Image(avg_pmap, func.affine)
+                            #    nib.save(img=avg_pmap_img, filename=fname_avg_pmap)
 
 
     # Average all contrasts and runs of all sessions across subjects 
@@ -293,11 +279,11 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
                         tmp_zmap2   = nib.load(fname_zmap2)
                         ALL_subj_image_array.append( tmp_zmap2.get_fdata() )
                     
-                    fname_pmap2 = tmp_fdir_firstlvl + f"{subjID}_{ses}_avg_p_{str_contrast}_tSNR{tSNR_tresh}.nii"
-                    if os.path.exists(fname_pmap2):
-                        tmp_pmap2   = nib.load(fname_pmap2)
-                        ALL_subj_image_array2.append( tmp_pmap2.get_fdata() )
-                        subj_count = subj_count +1
+                    #fname_pmap2 = tmp_fdir_firstlvl + f"{subjID}_{ses}_avg_p_{str_contrast}_tSNR{tSNR_tresh}.nii"
+                    #if os.path.exists(fname_pmap2):
+                    #    tmp_pmap2   = nib.load(fname_pmap2)
+                    #    ALL_subj_image_array2.append( tmp_pmap2.get_fdata() )
+                    #    subj_count = subj_count +1
             
             # Z scores              
             ALL_subj_image_array = np.array(ALL_subj_image_array)
@@ -307,36 +293,22 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
             all_avg_zmap_img = nib.Nifti1Image(all_avg_zmap, func.affine)
             nib.save(img=all_avg_zmap_img, filename=fname_avg_zmap)
             
-            # P values   
-            ALL_subj_image_array2 = np.array(ALL_subj_image_array2)
-            all_avg_pmap = np.mean(ALL_subj_image_array2, axis=0)
-            fname_avg_pmap = fdir_group_firstlvl_final + f"GroupN{subj_count}_{ses}_avg_p_{str_contrast}_tSNR{tSNR_tresh}.nii"
+            ## P values   
+            #ALL_subj_image_array2 = np.array(ALL_subj_image_array2)
+            #all_avg_pmap = np.mean(ALL_subj_image_array2, axis=0)
+            #fname_avg_pmap = fdir_group_firstlvl_final + f"GroupN{subj_count}_{ses}_avg_p_{str_contrast}_tSNR{tSNR_tresh}.nii"
                             
-            all_avg_pmap_img = nib.Nifti1Image(all_avg_pmap, func.affine)
-            nib.save(img=all_avg_pmap_img, filename=fname_avg_pmap)
+            #all_avg_pmap_img = nib.Nifti1Image(all_avg_pmap, func.affine)
+            #nib.save(img=all_avg_pmap_img, filename=fname_avg_pmap)
 
 
                             
 
     return
 
-def func_apply_glm(participants=None, params=None, smoothing_fwhm=8):
+def func_apply_glm(participants=None, params=None, smoothing_fwhm=8, contrast=None):
     
-    contrast = ['unimodal_images - unimodal_audios',
-                'unimodal_audios - unimodal_images',
-                'congruent - incongruent',
-                'incongruent - congruent',
-                'unimodal_images - baseline',
-                'unimodal_audios - baseline',
-                'congruent - baseline',
-                'incongruent - baseline',
-                'unimodal_images - null_event',
-                'unimodal_audios - null_event',
-                'congruent - null_event',
-                'incongruent - null_event',
-                'baseline', 'null_event']
-    
-    
+
     if participants is None:
         participants = []
     check_make_dir(params.get('fdir_proc_pre'))
@@ -487,10 +459,10 @@ def func_apply_glm(participants=None, params=None, smoothing_fwhm=8):
                                 fname_zmap = fdir_der_firstlvl + f"{subjID}_{ses}_{runID}_{str_contrast}_zscore.nii"
                                 nib.save(z_map, fname_zmap)
 
-                                p_map = fmri_maps.compute_contrast(
-                                        contrast_id, output_type="p_value")
-                                fname_pmap = fdir_der_firstlvl + f"{subjID}_{ses}_{runID}_{str_contrast}_pvalue.nii"
-                                nib.save(p_map, fname_pmap)
+                                #p_map = fmri_maps.compute_contrast(
+                                #        contrast_id, output_type="p_value")
+                                #fname_pmap = fdir_der_firstlvl + f"{subjID}_{ses}_{runID}_{str_contrast}_pvalue.nii"
+                                #nib.save(p_map, fname_pmap)
 
                             print("     # Done\n")
 
@@ -522,9 +494,9 @@ def func_apply_glm(participants=None, params=None, smoothing_fwhm=8):
                                 tmp_zmap = nib.load(fname_zmap)
                                 image_array.append(tmp_zmap.get_fdata())
 
-                                fname_pmap = fdir_der_firstlvl + f"{subjID}_{ses}_{runID}_{str_contrast}_pvalue.nii"
-                                tmp_pmap = nib.load(fname_pmap)
-                                image_array2.append(tmp_pmap.get_fdata())
+                                #fname_pmap = fdir_der_firstlvl + f"{subjID}_{ses}_{runID}_{str_contrast}_pvalue.nii"
+                                #tmp_pmap = nib.load(fname_pmap)
+                                #image_array2.append(tmp_pmap.get_fdata())
 
                             if len(image_array) > 0:
                                 image_array = np.array(image_array)
@@ -534,13 +506,13 @@ def func_apply_glm(participants=None, params=None, smoothing_fwhm=8):
                                 avg_zmap_img = nib.Nifti1Image(avg_zmap, func.affine)
                                 nib.save(img=avg_zmap_img,filename=fname_avg_zmap)
 
-                            if len(image_array2) > 0:
-                                image_array2 = np.array(image_array2)
-                                avg_pmap = np.mean(image_array2, axis=0)
-                                fname_avg_pmap = fdir_der_firstlvl_final + f"{subjID}_{ses}_avg_p_{str_contrast}.nii"
+                            #if len(image_array2) > 0:
+                            #    image_array2 = np.array(image_array2)
+                            #    avg_pmap = np.mean(image_array2, axis=0)
+                            #    fname_avg_pmap = fdir_der_firstlvl_final + f"{subjID}_{ses}_avg_p_{str_contrast}.nii"
 
-                                avg_pmap_img = nib.Nifti1Image(avg_pmap, func.affine)
-                                nib.save(img=avg_pmap_img,filename=fname_avg_pmap)
+                            #    avg_pmap_img = nib.Nifti1Image(avg_pmap, func.affine)
+                            #    nib.save(img=avg_pmap_img,filename=fname_avg_pmap)
 
 
     # Average all contrasts and runs of all sessions across subjects 
@@ -570,11 +542,11 @@ def func_apply_glm(participants=None, params=None, smoothing_fwhm=8):
                         tmp_zmap2   = nib.load(fname_zmap2)
                         ALL_subj_image_array.append( tmp_zmap2.get_fdata() )
                     
-                    fname_pmap2 = tmp_fdir_firstlvl + f"{subjID}_{ses}_avg_p_{str_contrast}.nii"
-                    if os.path.exists(fname_pmap2):
-                        tmp_pmap2   = nib.load(fname_pmap2)
-                        ALL_subj_image_array2.append( tmp_pmap2.get_fdata() )
-                        subj_count = subj_count +1
+                    #fname_pmap2 = tmp_fdir_firstlvl + f"{subjID}_{ses}_avg_p_{str_contrast}.nii"
+                    #if os.path.exists(fname_pmap2):
+                    #    tmp_pmap2   = nib.load(fname_pmap2)
+                    #    ALL_subj_image_array2.append( tmp_pmap2.get_fdata() )
+                    #    subj_count = subj_count +1
             
             # Z scores              
             ALL_subj_image_array = np.array(ALL_subj_image_array)
@@ -584,13 +556,13 @@ def func_apply_glm(participants=None, params=None, smoothing_fwhm=8):
             all_avg_zmap_img = nib.Nifti1Image(all_avg_zmap, func.affine)
             nib.save(img=all_avg_zmap_img, filename=fname_avg_zmap)
             
-            # P values   
-            ALL_subj_image_array2 = np.array(ALL_subj_image_array2)
-            all_avg_pmap = np.mean(ALL_subj_image_array2, axis=0)
-            fname_avg_pmap = fdir_group_firstlvl_final + f"GroupN{subj_count}_{ses}_avg_p_{str_contrast}.nii"
+            ## P values   
+            #ALL_subj_image_array2 = np.array(ALL_subj_image_array2)
+            #all_avg_pmap = np.mean(ALL_subj_image_array2, axis=0)
+            #fname_avg_pmap = fdir_group_firstlvl_final + f"GroupN{subj_count}_{ses}_avg_p_{str_contrast}.nii"
                             
-            all_avg_pmap_img = nib.Nifti1Image(all_avg_pmap, func.affine)
-            nib.save(img=all_avg_pmap_img, filename=fname_avg_pmap)
+            #all_avg_pmap_img = nib.Nifti1Image(all_avg_pmap, func.affine)
+            #nib.save(img=all_avg_pmap_img, filename=fname_avg_pmap)
 
 
                             

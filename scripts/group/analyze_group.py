@@ -53,6 +53,7 @@ def overview_tSNR(participants=None, params=None, tSNR_threshold=35, N_runsOK=2)
 
             runs = os.listdir(tmp_fdir_func)
             runs = get_only_nifti(runs, 1)
+
             if len(runs) > 0:
                 fdir_derivatives_func = (params.get('fdir_proc_pre')
                                     + '/' + participants[iSubj] 
@@ -70,101 +71,101 @@ def overview_tSNR(participants=None, params=None, tSNR_threshold=35, N_runsOK=2)
             tSNR_median_across_runs_preproc = []
             
             runs.sort()
-            
-            for run in runs:
-                tmp_fname_funcMR = f'{tmp_fdir_func}/{run}'
-                tmp_fname_func = os.path.splitext(os.path.basename(tmp_fname_funcMR))[0]
-                fname_func = os.path.splitext(os.path.basename(tmp_fname_func))[0]
+            if len(runs) > 0:
+                for run in runs:
+                    tmp_fname_funcMR = f'{tmp_fdir_func}/{run}'
+                    tmp_fname_func = os.path.splitext(os.path.basename(tmp_fname_funcMR))[0]
+                    fname_func = os.path.splitext(os.path.basename(tmp_fname_func))[0]
 
 
-                fname_func_tSNR = f'{fdir_derivatives_func}/{fname_func}_tSNR_r.nii.gz'
-                if os.path.exists(fname_func_tSNR):
-                    _, tSNR_median, _ = get_tSNR(fname_func_tSNR, tmp_fname_parc,  params)
+                    fname_func_tSNR = f'{fdir_derivatives_func}/{fname_func}_tSNR_r.nii.gz'
+                    if os.path.exists(fname_func_tSNR):
+                        _, tSNR_median, _ = get_tSNR(fname_func_tSNR, tmp_fname_parc,  params)
 
 
-                fname_func_r_tSNR = f'{fdir_derivatives_func}/{fname_func}_st_mcf_topUP_tSNR_r.nii.gz'
-                if os.path.exists(fname_func_r_tSNR):
-                    _, tSNR_median1, _ = get_tSNR(fname_func_r_tSNR, tmp_fname_parc, params)
+                    fname_func_r_tSNR = f'{fdir_derivatives_func}/{fname_func}_st_mcf_topUP_tSNR_r.nii.gz'
+                    if os.path.exists(fname_func_r_tSNR):
+                        _, tSNR_median1, _ = get_tSNR(fname_func_r_tSNR, tmp_fname_parc, params)
 
 
-                ALL_tSNR_median.extend(
-                    (
-                        {
-                            'Subject': participants[iSubj],
-                            'Session': session,
-                            'median tSNR (whole)': tSNR_median[0],
-                            'median tSNR (gm)': tSNR_median[1],
-                            'Processing\nstate': 'raw',
-                        },
-                        {
-                            'Subject': participants[iSubj],
-                            'Session': session,
-                            'median tSNR (whole)': tSNR_median1[0],
-                            'median tSNR (gm)': tSNR_median1[1],
-                            'Processing\nstate': 'preproc',
-                        },
+                    ALL_tSNR_median.extend(
+                        (
+                            {
+                                'Subject': participants[iSubj],
+                                'Session': session,
+                                'median tSNR (whole)': tSNR_median[0],
+                                'median tSNR (gm)': tSNR_median[1],
+                                'Processing\nstate': 'raw',
+                            },
+                            {
+                                'Subject': participants[iSubj],
+                                'Session': session,
+                                'median tSNR (whole)': tSNR_median1[0],
+                                'median tSNR (gm)': tSNR_median1[1],
+                                'Processing\nstate': 'preproc',
+                            },
+                        )
                     )
-                )
-                tSNR_median_across_runs_raw.append(tSNR_median[1])
-                tSNR_median_across_runs_preproc.append(tSNR_median1[1])
+                    tSNR_median_across_runs_raw.append(tSNR_median[1])
+                    tSNR_median_across_runs_preproc.append(tSNR_median1[1])
             
-            tmp_N_runs = len(tSNR_median_across_runs_raw)
-            fig, ax = plt.subplots()
-            fig.set_size_inches(8, 3)
-            fig.set_dpi(300)
-            if ((np.array(tSNR_median_across_runs_preproc) < tSNR_threshold).sum()) < N_runsOK:
-                fig.set_facecolor('lightgrey')
-            else:
-                fig.set_facecolor([1,0.8,0.79])
-            fig.set_tight_layout
-            
-            ax.set_title(f'Subject: {participants[iSubj]} | Session: {session}')
-            #create basic scatterplot
-            x = np.linspace(1, tmp_N_runs, tmp_N_runs)
-            plt.plot(x, tSNR_median_across_runs_raw,
-                    'o', color=sns.color_palette("pastel")[0])
-            plt.plot(x, tSNR_median_across_runs_preproc,
-                    'o', color=sns.color_palette("pastel")[1])
+                tmp_N_runs = len(tSNR_median_across_runs_raw)
+                fig, ax = plt.subplots()
+                fig.set_size_inches(8, 3)
+                fig.set_dpi(300)
+                if ((np.array(tSNR_median_across_runs_preproc) < tSNR_threshold).sum()) < N_runsOK:
+                    fig.set_facecolor('lightgrey')
+                else:
+                    fig.set_facecolor([1,0.8,0.79])
+                fig.set_tight_layout
+                
+                ax.set_title(f'Subject: {participants[iSubj]} | Session: {session}')
+                #create basic scatterplot
+                x = np.linspace(1, tmp_N_runs, tmp_N_runs)
+                plt.plot(x, tSNR_median_across_runs_raw,
+                        'o', color=sns.color_palette("pastel")[0])
+                plt.plot(x, tSNR_median_across_runs_preproc,
+                        'o', color=sns.color_palette("pastel")[1])
 
-            #obtain m (slope) and b(intercept) of linear regression line           
-            coeff = np.polyfit(x, tSNR_median_across_runs_raw, 3)
-            yn = np.poly1d(coeff)
-            coeff1 = np.polyfit(x, tSNR_median_across_runs_preproc, 3)
-            yn1 = np.poly1d(coeff1)
-            plt.plot(x, yn(x), 
-                    linewidth=4,
-                    color=sns.color_palette("pastel")[0])
-            plt.plot(x, yn1(x), 
-                    linewidth=4,
-                    color=sns.color_palette("pastel")[1])
-            
-            ax.set_xticks(x)
-            ax.set_xlim([0.5, 5])
-            ax.set_ylim([0, 120])
-            
-            plot_tSNR_threshold = np.zeros(tmp_N_runs)
-            plot_tSNR_threshold1 = np.zeros(tmp_N_runs)
-            plot_tSNR_threshold1[:] = tSNR_threshold
-            # Fill in area under the curve and the horizontal lines
-            plt.axhline(tSNR_threshold, linestyle='--', 
-                        color='lightgrey', label="tSNR threshold",
-                        alpha=.85)
-            plt.fill_between(x=x, 
-                            y1=plot_tSNR_threshold, 
-                            y2=plot_tSNR_threshold1, 
-                            color='red',  interpolate=True, alpha=.15)
-
+                #obtain m (slope) and b(intercept) of linear regression line           
+                coeff = np.polyfit(x, tSNR_median_across_runs_raw, 3)
+                yn = np.poly1d(coeff)
+                coeff1 = np.polyfit(x, tSNR_median_across_runs_preproc, 3)
+                yn1 = np.poly1d(coeff1)
+                plt.plot(x, yn(x), 
+                        linewidth=4,
+                        color=sns.color_palette("pastel")[0])
+                plt.plot(x, yn1(x), 
+                        linewidth=4,
+                        color=sns.color_palette("pastel")[1])
+                
+                ax.set_xticks(x)
+                ax.set_xlim([0.5, 5])
+                ax.set_ylim([0, 120])
+                
+                plot_tSNR_threshold = np.zeros(tmp_N_runs)
+                plot_tSNR_threshold1 = np.zeros(tmp_N_runs)
+                plot_tSNR_threshold1[:] = tSNR_threshold
+                # Fill in area under the curve and the horizontal lines
+                plt.axhline(tSNR_threshold, linestyle='--', 
+                            color='lightgrey', label="tSNR threshold",
+                            alpha=.85)
+                plt.fill_between(x=x, 
+                                y1=plot_tSNR_threshold, 
+                                y2=plot_tSNR_threshold1, 
+                                color='red',  interpolate=True, alpha=.15)
 
 
-            ax_X_labels = []
-            for isesLabel in np.arange( tmp_N_runs ):
-                ax_X_labels.append('run ' + str(isesLabel+1))
-            ax.set_xticklabels(ax_X_labels)
-    
-            fname_fig = f'overview_tSNR_runs_{participants[iSubj]}_{session}.png'
-            
-            fig.savefig((fdir_fig + fname_fig), dpi=300)
-            ALL_fname_runs.append((fdir_fig + fname_fig))
+
+                ax_X_labels = []
+                for isesLabel in np.arange( tmp_N_runs ):
+                    ax_X_labels.append('run ' + str(isesLabel+1))
+                ax.set_xticklabels(ax_X_labels)
+        
+                fname_fig = f'overview_tSNR_runs_{participants[iSubj]}_{session}.png'
+                
+                fig.savefig((fdir_fig + fname_fig), dpi=300)
+                ALL_fname_runs.append((fdir_fig + fname_fig))
 
     viz_combine_plots(ALL_fname_runs, 'pdf', params)
 
