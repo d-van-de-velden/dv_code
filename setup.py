@@ -2,7 +2,7 @@ import os
 from setuptools import setup, find_packages
 
 
-__version__ = '0.4.96'
+__version__ = '0.4.97'
 
 
 def say_welcome(vers_info=None):
