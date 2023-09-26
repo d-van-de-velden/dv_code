@@ -6,18 +6,18 @@
 # 
 # 
 #
-
 from nilearn.glm import threshold_stats_img
 import nibabel as nib
+from dv_code.scripts.viz.plot_on_surface import viz_surface_plot, transform_to_surface
+
+
 
 
 def make_overlap_contrastmap_surface(fname_in=None, plotting_title='',
-                            alpha=0.05, mcc='fdr', cluster_ext=2, 
+                            alpha=0.05, mcc='fpr', cluster_ext=2, 
                             fname_out="output.png"):
     
-    fname_in = ["/data/p_02825/cocoa/data/derivatives/1st_level/Group/ses-1/GroupN20_ses-1_avg_z_unimodal_audios_vs_null_event_tSNR50.nii", 
-                "/data/p_02825/cocoa/data/derivatives/1st_level/Group/ses-1/GroupN20_ses-1_avg_z_unimodal_images_vs_null_event_tSNR50.nii",
-    ]
+
     
 
     if type(fname_in) is list:

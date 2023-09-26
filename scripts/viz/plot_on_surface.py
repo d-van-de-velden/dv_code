@@ -7,18 +7,14 @@
 # 
 #
 import os
-import matplotlib as mpl
+
 from matplotlib import pyplot as plt
-from nilearn.glm import threshold_stats_img
-import matplotlib.pylab as plat
-import sys
-from PIL import Image
 
 from nilearn import surface
-import nibabel as nib
+
 import nilearn
 from nilearn import plotting
-import numpy as np
+
 from PIL import Image
 
 def transform_to_surface(data_in=None):
@@ -36,6 +32,7 @@ def transform_to_surface(data_in=None):
     
     
     return surface_data_LH, surface_data_RH
+
 
 
 def viz_surface_plot(surface_data_LH=None, surface_data_RH=None,
