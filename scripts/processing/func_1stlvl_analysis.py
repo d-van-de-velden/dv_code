@@ -126,7 +126,7 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
                                 n_scans = func.shape[3]
                                 
                                 anat    = nib.load(tmp_fname_MR)
-                                events       = pd.read_csv(eventspath,sep='\t')
+                                events  = pd.read_csv(eventspath,sep='\t')
                                 
                                 baseline = {'onset': [events.onset[47] + events.duration[47]],
                                             'duration': [( n_scans * tr ) - events.onset[47] + events.duration[47]],

@@ -17,5 +17,6 @@ from .read_analysis_params import read_analysis_params
 from .select_filetype import get_only_json, get_only_nifti, get_only_zip
 from .setup_BIDS_dir import setup_BIDS_dir
 from .work_matrix import rotate_matrix
+from .work_fnames import change_file_extension
 from .use_utils import unpack_compressed
 

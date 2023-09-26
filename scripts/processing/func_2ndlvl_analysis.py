@@ -48,6 +48,8 @@ def make_overlap_contrastmap_surface(fname_in=None, plotting_title='',
     img_overlap_mask[img_overlap_mask > 0] = threshold * 2
     
     img_overlap = nib.Nifti1Image(img_overlap_mask, vol_data_init.affine)
+    fname_out_nifti = change_file_extension(fname_out, 'nii')
+    nib.save(fname_out_nifti, img_overlap)
 
     surface_data_LH, surface_data_RH = transform_to_surface(img_overlap)
     
@@ -59,3 +61,5 @@ def make_overlap_contrastmap_surface(fname_in=None, plotting_title='',
 
     
     return
+
+

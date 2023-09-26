@@ -221,7 +221,7 @@ def calc_tSNR(fname, fname_T1w, fname_parc, params):
 
 def calc_tSNR_aligned(fname, fname_parc, params):
     
-    print(f'# Calcualting tSNR...')
+    print(f'# Calculating tSNR...')
     
     tmp_fname_func = os.path.splitext(os.path.basename(fname))[0]
     fname_func = os.path.splitext(os.path.basename(tmp_fname_func))[0]

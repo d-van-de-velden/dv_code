@@ -18,7 +18,6 @@ from nilearn import plotting
 from PIL import Image
 
 def transform_to_surface(data_in=None):
-    
 
     fsaverage    = nilearn.datasets.fetch_surf_fsaverage()
     surface_data_RH = surface.vol_to_surf(data_in, fsaverage.pial_right, 
@@ -29,7 +28,6 @@ def transform_to_surface(data_in=None):
                                     interpolation='nearest', # interpolation : {'linear', 'nearest'}
                                     radius=3, # mm) of the neighbourhood from which samples are drawn
                                     )
-    
     
     return surface_data_LH, surface_data_RH
 
