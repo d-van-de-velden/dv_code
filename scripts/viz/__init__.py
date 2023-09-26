@@ -11,3 +11,4 @@
 
 from . import combine_plots
 from . import plot_tsnr
+from . import plot_on_surface

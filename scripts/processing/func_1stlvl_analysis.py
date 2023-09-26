@@ -135,6 +135,9 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
                                 
                                 events = pd.concat([events, df_baseline], ignore_index=True, sort=False)
                                 
+                                # Shift event onset by TR / 2 to account for slice time correction
+                                events['onset'] = events.loc[:, 'onset'] - tr / 2
+    
                                 motion_par = ["tx", "ty", "tz", "rx", "ry", "rz"]
                                 motion = np.array( pd.read_csv(tmp_fname_motion_funcMR,
                                                     delim_whitespace=True,
@@ -145,7 +148,7 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
                                 frame_times = tr * np.arange(n_scans)
                                 dm = make_first_level_design_matrix(
                                     frame_times = frame_times,
-                                    hrf_model = 'spm',
+                                    hrf_model = 'spm + derivative',
                                     events = events,
                                     add_regs=motion,
                                     add_reg_names=motion_par,
@@ -278,6 +281,7 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
                     if os.path.exists(fname_zmap2):
                         tmp_zmap2   = nib.load(fname_zmap2)
                         ALL_subj_image_array.append( tmp_zmap2.get_fdata() )
+                        subj_count = subj_count +1
                     
                     #fname_pmap2 = tmp_fdir_firstlvl + f"{subjID}_{ses}_avg_p_{str_contrast}_tSNR{tSNR_tresh}.nii"
                     #if os.path.exists(fname_pmap2):
@@ -422,7 +426,7 @@ def func_apply_glm(participants=None, params=None, smoothing_fwhm=8, contrast=No
                             frame_times = tr * np.arange(n_scans)
                             dm = make_first_level_design_matrix(
                                 frame_times=frame_times,
-                                hrf_model='spm',
+                                hrf_model='spm + derivative',
                                 events=events,
                                 add_regs=motion,
                                 add_reg_names=motion_par,
@@ -541,6 +545,7 @@ def func_apply_glm(participants=None, params=None, smoothing_fwhm=8, contrast=No
                     if os.path.exists(fname_zmap2):
                         tmp_zmap2   = nib.load(fname_zmap2)
                         ALL_subj_image_array.append( tmp_zmap2.get_fdata() )
+                        subj_count = subj_count +1
                     
                     #fname_pmap2 = tmp_fdir_firstlvl + f"{subjID}_{ses}_avg_p_{str_contrast}.nii"
                     #if os.path.exists(fname_pmap2):
