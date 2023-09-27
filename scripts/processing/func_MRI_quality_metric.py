@@ -159,6 +159,7 @@ def calc_tSNR(fname, fname_T1w, fname_parc, params):
     idents  = fname_func.split('_')
     subjID  = idents[0]
     session = idents[1]
+    runID   = idents[2]
 
     fdir_func_r  = (params.get('fdir_proc_pre') 
                     + '/' + subjID
@@ -229,7 +230,8 @@ def calc_tSNR_aligned(fname, fname_parc, params):
     idents  = fname_func.split('_')
     subjID  = idents[0]
     session = idents[1]
-
+    runID   = idents[2]
+    
     fdir_func_r  = (params.get('fdir_proc_pre') 
                     + '/' + subjID
                     + '/' + session
@@ -269,6 +271,9 @@ def calc_tSNR_aligned(fname, fname_parc, params):
     tSNR_median = round( np.nanmedian( dat_func_tSNR ), 2)
     print(f'The median tSNR in the grey matter is: {tSNR_median}')
     os.remove(fname_resample_OUT)
+    
+    fname_table_tSNR = f'{fdir_func_r}/tSNR_{fname_func}.json'
+    make_table_tSNR(fname_table_tSNR, tSNR_median, subjID, session, runID)
 
     return tSNR_median
 
@@ -328,3 +333,90 @@ def get_tSNR(fname_tsnr, fname_parc, params, doPlot=False):
     return fname_plot, tSNR_median, ROI_label
 
 
+
+
+def make_table_tSNR(fname_table_tSNR='', tSNR_median=0, subjID='', session='', runID=''):
+    
+    import json
+    from os import path
+    
+    listObj = []
+    
+    # Check if file exists
+    if path.isfile(fname_table_tSNR) is False:
+        print("File not found")
+        listObj.append({
+            "Subject": subjID,
+            "Session": session,
+            "Run": runID,
+            "tSNR": str(tSNR_median),
+            })
+        str_action ='created'
+
+    else:
+
+        # Read JSON file
+        with open(fname_table_tSNR) as fp:
+            listObj = json.load(fp)
+        
+        # Verify existing list
+        print(listObj)
+        print(type(listObj))
+        
+        listObj.append({
+            "Subject": subjID,
+            "Session": session,
+            "Run": runID,
+            "tSNR": str(tSNR_median),
+            })
+        # Verify updated list
+        print(listObj)
+        str_action ='appended'
+        
+    # Serializing json
+    json_object = json.dumps(listObj, indent=4, separators=(',',': '))
+    # Writing to sample.json
+    with open(fname_table_tSNR, 'w') as json_file:
+        json_file.write(json_object)
+    
+    print(f'Successfully {str_action} to the JSON file')
+    
+    
+    
+    
+    return
+
+
+def read_table_tSNR(fname, params):
+    
+    import json
+    from os import path
+    
+    tmp_fname_func = os.path.splitext(os.path.basename(fname))[0]
+    fname_func = os.path.splitext(os.path.basename(tmp_fname_func))[0]
+
+    idents  = fname_func.split('_')
+    subjID  = idents[0]
+    session = idents[1]
+    runID   = idents[2]
+    
+    fdir_func_r  = (params.get('fdir_proc_pre') 
+                    + '/' + subjID
+                    + '/' + session
+                    + '/func'
+                    )
+    
+    fname_table_tSNR = f'{fdir_func_r}/tSNR_{fname_func}.json'
+    
+    listObj = []
+    # Check if file exists
+    if path.isfile(fname_table_tSNR) is True:
+        # Read JSON file
+        with open(fname_table_tSNR) as fp:
+            listObj = json.load(fp)
+            
+    else:
+        print('tSNR table not available.')
+            
+
+    return listObj

@@ -9,7 +9,7 @@
 from nilearn.glm import threshold_stats_img
 import nibabel as nib
 from dv_code.scripts.viz.plot_on_surface import viz_surface_plot, transform_to_surface
-
+from dv_code.scripts.misc.work_fnames import change_file_extension
 
 
 
@@ -49,7 +49,7 @@ def make_overlap_contrastmap_surface(fname_in=None, plotting_title='',
     
     img_overlap = nib.Nifti1Image(img_overlap_mask, vol_data_init.affine)
     fname_out_nifti = change_file_extension(fname_out, 'nii')
-    nib.save(fname_out_nifti, img_overlap)
+    nib.save(img_overlap, fname_out_nifti)
 
     surface_data_LH, surface_data_RH = transform_to_surface(img_overlap)
     

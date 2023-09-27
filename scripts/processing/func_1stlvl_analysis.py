@@ -10,7 +10,7 @@
 
 import json
 import os
-from dv_code.scripts.processing.func_MRI_quality_metric import calc_tSNR_aligned
+from dv_code.scripts.processing.func_MRI_quality_metric import calc_tSNR_aligned, read_table_tSNR
 
 import nibabel as nib
 import numpy as np
@@ -26,6 +26,12 @@ from nilearn.reporting import make_glm_report
 
 def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8, tSNR_tresh=30, contrast=None):
     
+    """_summary_
+    Iterate across subjects, sessions, runs. Calculate tSNR and only use run for GLM 
+    if it passes given tSNR threshhold. Calculate all contrast maps and average across subjects.
+    Save all contrast maps as nifti for each subject, session. 
+    Average all contrast maps (niftis) of subjects, per session.
+    """
     
     if participants is None:
         participants = []
@@ -36,6 +42,7 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
     )
 
     all_sessions = list()
+    runs_count = 0
     for iSubj in range(len(participants)):
         print(f'# Identifying sessions from "derivatives/{participants[iSubj]}"/ ....')
         tmp_fdir_subj = params.get('fdir_proc_pre') + '/' + participants[iSubj]
@@ -63,6 +70,7 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
                     runs.sort()
                     if len(runs) > 0:
                         for run in runs:
+                            runs_count = runs_count + 1
                             
                             indices = run.split('_')
                             subjID = indices[0]
@@ -75,12 +83,7 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
                             tmp_fname_final_funcMR = fdir_derivatives_func + '/' + run
                             if os.path.exists(tmp_fname_final_funcMR):
                                 print(f'     Found functional data :   {tmp_fname_final_funcMR}.')
-                            
-                            # Get anatomical data as nifti file
-                            tmp_fname_MR = fdir_derivatives_anat + f'/{subjID}_{ses}_T1w_nu_w.nii.gz'
-                            if os.path.exists(tmp_fname_MR):
-                                print(f'     Found anatomical data :   {tmp_fname_MR}.')
-                                    
+                                                                
                             # Perform image quality metric analysis
                             fdir_derivatives_anat = (params.get('fdir_proc_pre')
                                 + '/' + subjID 
@@ -89,7 +92,12 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
                             fname_parc = f'{fdir_derivatives_anat}/{subjID}_{session}_T1w_aparc+aseg_w.nii.gz'
     
                             
-                            tmp_tSNR_median = calc_tSNR_aligned(tmp_fname_final_funcMR, fname_parc, params)
+                            tSNR_dict = read_table_tSNR(tmp_fname_final_funcMR, params)
+                            
+                            if len(tSNR_dict) == 0:
+                                tmp_tSNR_median = calc_tSNR_aligned(tmp_fname_final_funcMR, fname_parc, params)
+                            else:
+                                tmp_tSNR_median = float(tSNR_dict[0]['tSNR'])
                                 
                             if tmp_tSNR_median >= tSNR_tresh:
                                 
@@ -125,7 +133,6 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
                                 tr      = RepetitionTime
                                 n_scans = func.shape[3]
                                 
-                                anat    = nib.load(tmp_fname_MR)
                                 events  = pd.read_csv(eventspath,sep='\t')
                                 
                                 baseline = {'onset': [events.onset[47] + events.duration[47]],
@@ -134,9 +141,7 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
                                 df_baseline = pd.DataFrame(baseline)
                                 
                                 events = pd.concat([events, df_baseline], ignore_index=True, sort=False)
-                                
-                                # Shift event onset by TR / 2 to account for slice time correction
-                                events['onset'] = events.loc[:, 'onset'] - tr / 2
+
     
                                 motion_par = ["tx", "ty", "tz", "rx", "ry", "rz"]
                                 motion = np.array( pd.read_csv(tmp_fname_motion_funcMR,
@@ -144,63 +149,10 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
                                                     names=motion_par) 
                                                 )
 
-                                # make design matrix
-                                frame_times = tr * np.arange(n_scans)
-                                dm = make_first_level_design_matrix(
-                                    frame_times = frame_times,
-                                    hrf_model = 'spm + derivative',
-                                    events = events,
-                                    add_regs=motion,
-                                    add_reg_names=motion_par,
-                                    min_onset=0)
-                                
-                                # init model
-                                # TODO drift model wanted?
-                                fmri_glm = FirstLevelModel(
-                                    t_r = tr,
-                                    subject_label = participants[iSubj],
-                                    minimize_memory = True,
-                                    high_pass=0.008,
-                                    smoothing_fwhm=smoothing_fwhm)
+                                func_fit_glm(func, tr, events, motion, motion_par, 
+                                            subjID, smoothing_fwhm, params, contrast,
+                                            tSNR_tresh, ses, runID)
 
-                                # fit model
-                                print("     # Fitting a GLM")
-                                fmri_maps = fmri_glm.fit(func,
-                                                        design_matrices=dm)
-                                
-                                
-                                fdir_der_firstlvl = ( params.get('fdir_proc') 
-                                                    + '/1st_level/'
-                                                    + subjID + '/' + ses + '/' + runID + '/'
-                                )
-                                check_make_dir(fdir_der_firstlvl)
-                                
-                                print("     # Make nifti for each contrast")
-                                # Make nifti for each contrast
-                                for i, contrast_id in enumerate(contrast):
-                                    loadingBar(i, len(contrast), contrast_id)
-                                    z_map = fmri_maps.compute_contrast(contrast_id, output_type="z_score")
-                                    str_contrast = contrast_id.replace(" - ", "_vs_")
-                                    fname_zmap = fdir_der_firstlvl + f"{subjID}_{ses}_{runID}_{str_contrast}_tSNR{tSNR_tresh}_zscore.nii"
-                                    nib.save(z_map, fname_zmap)
-                                    
-                                    #p_map = fmri_maps.compute_contrast(contrast_id, output_type="p_value")
-                                    #fname_pmap = fdir_der_firstlvl + f"{subjID}_{ses}_{runID}_{str_contrast}_tSNR{tSNR_tresh}_pvalue.nii"
-                                    #nib.save(p_map, fname_pmap)
-                                    
-                                print("     # Done\n")
-                                #print("Reporting a GLM")
-                                #z_cuts = np.linspace(-45,90,25)
-                                #report = make_glm_report(fmri_maps,
-                                #                        contrasts=contrast,
-                                #                        bg_img=anat,
-                                #                        cut_coords=z_cuts,
-                                #                        title=f'{subjID}_{ses}_{runID}',
-                                #                        cluster_threshold=2)
-                                #display_mode='ortho'
-                                #
-                                #print(f"Results at: {fdir_der_firstlvl}report3_{subjID}_{ses}_{runID}.html")
-                                #report.save_as_html(f"{fdir_der_firstlvl}report3_{subjID}_{ses}_{runID}.html")
                         
                         
                         # Average all contrasts and runs
@@ -212,7 +164,7 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
                         print("Average for each contrast over all runs")
                         for i, contrast_id in enumerate(contrast):
                             loadingBar(i, len(contrast), contrast_id)
-                            str_contrast = contrast_id.replace(" - ", "_vs_")
+                            str_contrast = contrast_id.replace(" ", "_")
 
                             image_array = list()
                             image_array2 = list()
@@ -231,12 +183,7 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
                                 if os.path.exists(fname_zmap):
                                     tmp_zmap   = nib.load(fname_zmap)
                                     image_array.append( tmp_zmap.get_fdata() )
-                                
-                                #fname_pmap = fdir_der_firstlvl + f"{subjID}_{ses}_{runID}_{str_contrast}_tSNR{tSNR_tresh}_pvalue.nii"
-                                #if os.path.exists(fname_pmap):
-                                #    tmp_pmap   = nib.load(fname_pmap)
-                                #    image_array2.append( tmp_pmap.get_fdata() )
-                            
+                                                            
                             
                             if len(image_array) > 0:
                                 image_array = np.array(image_array)
@@ -245,14 +192,13 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
                                 
                                 avg_zmap_img = nib.Nifti1Image(avg_zmap, func.affine)
                                 nib.save(img=avg_zmap_img, filename=fname_avg_zmap)
-                            
-                            #if len(image_array2) > 0:
-                            #    image_array2 = np.array(image_array2)
-                            #    avg_pmap = np.mean(image_array2, axis=0)
-                            #    fname_avg_pmap = fdir_der_firstlvl_final + f"{subjID}_{ses}_avg_p_{str_contrast}_tSNR{tSNR_tresh}.nii"
                                 
-                            #    avg_pmap_img = nib.Nifti1Image(avg_pmap, func.affine)
-                            #    nib.save(img=avg_pmap_img, filename=fname_avg_pmap)
+                                sd_zmap = np.std(image_array, axis=0)
+                                fname_sd_zmap = fdir_der_firstlvl_final + f"{subjID}_{ses}_sd_z_{str_contrast}_tSNR{tSNR_tresh}.nii"
+                                
+                                sd_zmap_img = nib.Nifti1Image(sd_zmap, func.affine)
+                                nib.save(img=sd_zmap_img, filename=fname_sd_zmap)
+
 
 
     # Average all contrasts and runs of all sessions across subjects 
@@ -266,7 +212,7 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
         check_make_dir(fdir_group_firstlvl_final)
         for i, contrast_id in enumerate(contrast):
             loadingBar(i, len(contrast), contrast_id)
-            str_contrast = contrast_id.replace(" - ", "_vs_")
+            str_contrast = contrast_id.replace(" ", "_")
             
             ALL_subj_image_array = list()
             ALL_subj_image_array2 = list()
@@ -283,30 +229,20 @@ def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8,
                         ALL_subj_image_array.append( tmp_zmap2.get_fdata() )
                         subj_count = subj_count +1
                     
-                    #fname_pmap2 = tmp_fdir_firstlvl + f"{subjID}_{ses}_avg_p_{str_contrast}_tSNR{tSNR_tresh}.nii"
-                    #if os.path.exists(fname_pmap2):
-                    #    tmp_pmap2   = nib.load(fname_pmap2)
-                    #    ALL_subj_image_array2.append( tmp_pmap2.get_fdata() )
-                    #    subj_count = subj_count +1
             
             # Z scores              
             ALL_subj_image_array = np.array(ALL_subj_image_array)
             all_avg_zmap = np.mean(ALL_subj_image_array, axis=0)
-            fname_avg_zmap = fdir_group_firstlvl_final + f"GroupN{subj_count}_{ses}_avg_z_{str_contrast}_tSNR{tSNR_tresh}.nii"
+            fname_avg_zmap = fdir_group_firstlvl_final + f"GroupN{subj_count}_{ses}_Nruns_{runs_count}_avg_z_{str_contrast}_tSNR{tSNR_tresh}.nii"
                             
             all_avg_zmap_img = nib.Nifti1Image(all_avg_zmap, func.affine)
             nib.save(img=all_avg_zmap_img, filename=fname_avg_zmap)
             
-            ## P values   
-            #ALL_subj_image_array2 = np.array(ALL_subj_image_array2)
-            #all_avg_pmap = np.mean(ALL_subj_image_array2, axis=0)
-            #fname_avg_pmap = fdir_group_firstlvl_final + f"GroupN{subj_count}_{ses}_avg_p_{str_contrast}_tSNR{tSNR_tresh}.nii"
+            all_sd_zmap = np.std(ALL_subj_image_array, axis=0)
+            fname_sd_zmap = fdir_group_firstlvl_final + f"GroupN{subj_count}_{ses}_Nruns_{runs_count}_sd_z_{str_contrast}_tSNR{tSNR_tresh}.nii"
                             
-            #all_avg_pmap_img = nib.Nifti1Image(all_avg_pmap, func.affine)
-            #nib.save(img=all_avg_pmap_img, filename=fname_avg_pmap)
-
-
-                            
+            all_sd_zmap_img = nib.Nifti1Image(all_sd_zmap, func.affine)
+            nib.save(img=all_sd_zmap_img, filename=fname_sd_zmap)
 
     return
 
@@ -577,6 +513,9 @@ def func_apply_glm(participants=None, params=None, smoothing_fwhm=8, contrast=No
 
 def plot_beta_map(fmri_map=None, anat=None, contrastID=None):
     
+    """_summary_
+    Plot the fmri map as figure, no saving pictures
+    """
     plotting.plot_stat_map(
             fmri_map,
             bg_img=anat,
@@ -588,3 +527,61 @@ def plot_beta_map(fmri_map=None, anat=None, contrastID=None):
     plotting.show()
     print('.')
     return
+
+
+def func_fit_glm(func=None, tr=2, events=None, 
+                motion=None, motion_par=None, 
+                subjID='subj-DUMMY', smoothing_fwhm=8, 
+                params=None, contrast='',
+                tSNR_tresh=0,
+                sesID='', runID=''):
+
+    """_summary_
+    Using all input variables to perform GL modelling and save all contrast map as Niftis
+    """
+    n_scans = func.shape[3]
+    
+    # make design matrix
+    frame_times = tr * np.arange(n_scans)
+    dm = make_first_level_design_matrix(
+        frame_times=frame_times,
+        hrf_model='spm + derivative',
+        events=events,
+        add_regs=motion,
+        add_reg_names=motion_par,
+        min_onset=0)
+
+    # init model
+    fmri_glm = FirstLevelModel(
+        t_r=tr,
+        subject_label=subjID,
+        minimize_memory=True,
+        high_pass=0.008,
+        slice_time_ref=0.5,
+        smoothing_fwhm=smoothing_fwhm)
+
+    # fit model
+    print("     # Fitting a GLM")
+    fmri_maps = fmri_glm.fit(func,
+                            design_matrices=dm)
+
+    fdir_der_firstlvl = (params.get('fdir_proc')
+                        + '/1st_level/'
+                        + subjID + '/' + sesID + '/' + runID + '/'
+                            )
+    check_make_dir(fdir_der_firstlvl)
+
+    print("     # Make nifti for each contrast")
+    # Make nifti for each contrast
+    for i, contrast_id in enumerate(contrast):
+        loadingBar(i, len(contrast), contrast_id)
+        z_map = fmri_maps.compute_contrast(contrast_id, output_type="z_score")
+        str_contrast = contrast_id.replace(" ", "_")
+        
+        fname_zmap = fdir_der_firstlvl + f"{subjID}_{sesID}_{runID}_{str_contrast}_tSNR{tSNR_tresh}_zscore.nii"
+        nib.save(z_map, fname_zmap)
+
+    print("     # Done\n")
+
+    return
+                                
