@@ -55,7 +55,7 @@ setup(
     license='BSD (3-clause)',
     packages=find_packages(),
     install_requires=[
-        'pyocclient','numpy'
+        'pyocclient','numpy', 'dcm2bids', 'nilearn', 'nibabel'
         ],
     
 )
