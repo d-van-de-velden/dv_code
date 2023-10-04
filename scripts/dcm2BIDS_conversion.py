@@ -17,7 +17,8 @@ import numpy as np
 from dv_code.scripts.work_participants import update_participants
 from dv_code.scripts.misc import check_make_dir
 from dv_code.scripts.misc.use_utils import unpack_compressed
-
+from dv_code.scripts.work_participants import get_participants
+from dv_code.scripts.misc.analysis_feedback import loadingBar
 
 def convert_dcm2BIDS(params):
     
@@ -61,16 +62,23 @@ def convert_dcm2BIDS(params):
                                         + ' -s ' + session 
                                         + ' -c ' + fname_config
                                         + ' -o ' + params.get('fdir_data')
-                                        + ' --forceDcm2niix'
-                                        + ' --clobber')
+                                        + ' --clobber'
+                                        + ' --force_dcm2bids'
+                                        )
+
+
 
                     fdir_BIDS_subj = params.get('fdir_data') + 'sub-' + item[:4] + '/' + session + '/'
+                    fdir_BIDS_dir_entry = os.listdir(fdir_BIDS_subj)
                     do_convert = False
                     if os.path.exists(fdir_BIDS_subj) == False:
                         do_convert = True
                         check_make_dir(fdir_BIDS_subj)
                     elif len(fdir_BIDS_subj) == 0:
                         do_convert = True
+                    elif 'func' not in fdir_BIDS_dir_entry or 'fmap' not in fdir_BIDS_dir_entry:
+                        do_convert = True
+
 
                     if do_convert:
                         print('Now convert Nifties to BIDS conform directory structure...')
@@ -211,13 +219,52 @@ def convert_beh2BIDS(params):
                         print('# Renameing:')
                         print(f'    From : {old_filename}')
                         print(f'    To   : {new_filename}')
-                        
+
                         os.rename(old_filename, new_filename)
                         
 
-                            
-                    
-                
+
     update_participants(params)
+
+    participants = get_participants(params)
+    check_make_dir(params.get('fdir_proc_stat'))
+
+    fdir_results  = params.get('fdir_proc_stat') + '/group/'
+    check_make_dir(fdir_results)      
+
+    list_indicator_session = []
+    for iSubj in range(len(participants)):
+        tmp_fdir_subj = params.get('fdir_data') + participants[iSubj]
+
+        sessions = os.listdir(tmp_fdir_subj)
+
+        for session in sessions:
+            list_indicator_session.append(session)
+            tmp_fdir_beh_src  = f'{tmp_fdir_subj}/{session}/beh/'
+            tmp_fdir_beh_trgt = f'{fdir_results}/{session}/beh/'
+            check_make_dir(tmp_fdir_beh_trgt)  
+
+            if os.path.exists(tmp_fdir_beh_src) == True:
+                fnames = os.listdir(tmp_fdir_beh_src)
+
+                if fnames:
+                    for fname in fnames:
+                        # Only use .csv files
+                        if fname[-4:] == '.csv':
+                            loadingBar(iSubj, len(participants), task_part=participants[iSubj])
+                            tmp_fname = fname
+                            tmp_fname_beh = os.path.splitext(os.path.basename(tmp_fname))[0]
+                            fname_beh = os.path.splitext(os.path.basename(tmp_fname_beh))[0]
+
+                            idents  = fname_beh.split('_')
+                            subjID  = idents[0]
+                            session = idents[1]
+
+                            # Copy the csv file
+                            fname_csv_src  = ( tmp_fdir_beh_src  + tmp_fname)
+                            fname_csv_trgt = ( tmp_fdir_beh_trgt + tmp_fname)
+                            
+                            shutil.copyfile(fname_csv_src, fname_csv_trgt)
+                            
 
     return print('\n [ DONE ]\n\n')

@@ -48,7 +48,11 @@ def do_FS_recon(fdir_analysis="", participants=None, use_HPC = 0, params=None):
                             + '/anat/' + participants[iSubj] + '_' + session + '_T1w.nii.gz')
             if os.path.exists(tmp_fname_T1w) == True:
                 
-                fname_FS_done = (params.get('fdir_fs') + f'/{participants[iSubj]}/scripts/recon-all.done')
+                
+                fdir_FS_session = params.get('fdir_fs') + '/' + session
+                check_make_dir(fdir_FS_session)
+                
+                fname_FS_done = (fdir_FS_session + f'/{participants[iSubj]}/scripts/recon-all.done')
                 if os.path.exists(fname_FS_done) == False:
                     print(tmp_fname_T1w)
 
@@ -101,6 +105,16 @@ def do_FS_recon(fdir_analysis="", participants=None, use_HPC = 0, params=None):
 
                 else:
                     print(f'FreeSurfer recon-all already done for : {participants[iSubj]}')
+                    
+                #
+                # TODO: Maybe add Afni Suma
+                #'''@SUMA_Make_Spec_FS                                            \
+                #-fs_setup                                                 \
+                #-NIFTI                                                    \
+                #-sid    ${subj}                                           \
+                #-fspath ${dir_fs}/${subj}                                 \
+                #|& tee  ${dir_echo}/o.01_suma_makespec_${subj}.txt
+                #'''
 
                 print('# Bringing anatomical derivative files to folder..')
                 fdir_derivatives = (params.get('fdir_proc_pre')
