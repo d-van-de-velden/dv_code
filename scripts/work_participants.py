@@ -10,7 +10,7 @@ import os
 import csv
 import numpy as np
 import pandas as pd
-from dv_code.scripts.misc.feedback_messages import error_message, warn_message
+from dv_code.scripts.misc.feedback_messages import error_message
 
 
 def update_participants(params):
@@ -20,6 +20,8 @@ def update_participants(params):
     study_id = params.get('study_id')
 
     sessions = os.listdir(params.get('fdir_sourcedata'))
+    
+    dat_w_participants_tsv = []
     for ises in sessions:
         
         if ises[:3] == 'ses':
@@ -32,39 +34,39 @@ def update_participants(params):
                 for item in subjects_dir_entry
                 if item[-4:] == '.zip' and item[-9:] != '_logs.zip'
             ]
-            dat_w_participants_tsv = []
+            
             for i_fname in fname_dcm_dat:
                 subj_info = i_fname.split('_')
                 participant_id = f'sub-{str(subj_info[0])}'
                 ses     = subj_info[1]
                 studyID = subj_info[2]
-
+                
                 dat_w_participants_tsv.append([str(participant_id), str(ses), str(studyID)])
 
-            fname_participants_tsv = params.get('fdir_data') + 'participants.tsv'
-            if os.path.exists(fname_participants_tsv) == False:
-                print((f'No participant file present.\n' +
+    fname_participants_tsv = params.get('fdir_data') + 'participants.tsv'
+    if os.path.exists(fname_participants_tsv) == False:
+        print((f'No participant file present.\n' +
                         f'Creating one at:\n{fname_participants_tsv}'))
-                open(fname_participants_tsv, 'x')
+        open(fname_participants_tsv, 'x')
 
-                with open(fname_participants_tsv, 'w') as tsvfile:    #csv writer to write in tsv file
-                    tsv_writer = csv.writer(tsvfile, delimiter='\t')    #write header in tsv file
-                    tsv_writer.writerow(tsv_header_name)    #write rows
-                    tsv_writer.writerows(dat_w_participants_tsv)    #close csv file
-                    tsvfile.close()
+        with open(fname_participants_tsv, 'w') as tsvfile:    #csv writer to write in tsv file
+            tsv_writer = csv.writer(tsvfile, delimiter='\t')    #write header in tsv file
+            tsv_writer.writerow(tsv_header_name)    #write rows
+            tsv_writer.writerows(dat_w_participants_tsv)    #close csv file
+            tsvfile.close()
 
-            else:
-                print((f'Participant file for study "{study_id}" present.\n' +
-                        f'At: {fname_participants_tsv}'))
-                print('Updating it..')
+    else:
+        print((f'Participant file for study "{study_id}" present.\n' +
+                f'At: {fname_participants_tsv}'))
+        print('Updating it..')
 
-                with open(fname_participants_tsv, 'w') as tsvfile:    #csv writer to write in tsv file
-                    tsv_writer = csv.writer(tsvfile, delimiter='\t')    #write header in tsv file
-                    tsv_writer.writerow(tsv_header_name)    #write rows
-                    tsv_writer.writerows(dat_w_participants_tsv)    #close csv file
-                    tsvfile.close()
+        with open(fname_participants_tsv, 'w') as tsvfile:    #csv writer to write in tsv file
+            tsv_writer = csv.writer(tsvfile, delimiter='\t')    #write header in tsv file
+            tsv_writer.writerow(tsv_header_name)    #write rows
+            tsv_writer.writerows(dat_w_participants_tsv)    #close csv file
+            tsvfile.close()
 
-                print("participants.tsv file updated...")
+        print("participants.tsv file updated...")
 
 
     return print('[ DONE ]')

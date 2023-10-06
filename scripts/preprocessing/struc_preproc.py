@@ -77,7 +77,7 @@ def do_FS_recon(fdir_analysis="", participants=None, use_HPC = 0, params=None):
                             rsh.write('''\
                             #! /bin/bash
                             echo "I configure FREESURFER now...."
-                            export SUBJECTS_DIR=''' + params.get('fdir_fs') + ''' 
+                            export SUBJECTS_DIR=''' + fdir_FS_session + ''' 
                             cd $SUBJECTS_DIR
                             recon-all -subjid ''' + participants[iSubj] + ''' -i ''' + tmp_fname_T1w + ''' -all
                             exit 0
