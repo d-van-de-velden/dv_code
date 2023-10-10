@@ -642,8 +642,8 @@ for (session in sessions){
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 library(ggridges)
-fdir_plot <-  "/data/p_02825/cocoa/data/derivatives/stats/group/QC_Behavioral_across_Sessions/"
-dir.create(paste(fdir_plot, "QC_full_retry"))
+fdir_plot <-  "/data/p_02825/cocoa/data/derivatives/stats/group/QC_Behavioral_across_Sessions/QC_full_retry/"
+dir.create(fdir_plot)
 
 
 ### RT
@@ -654,12 +654,13 @@ Ridge_RT <- ggplot(RT_across_session, aes(x = RT, y = session, fill=type, color=
   labs(x = "Reaction time [s]", y = "Session", title="Reaction time across sessions") +
   guides(fill = "none") +
   theme_ridges() +
-  guides(fill = guide_legend(title = "Stim. Type"))
-ggsave(paste(fdir_plot, "/RidgePlot_AS_Reactiontime.png"))
+  guides(fill = guide_legend(title = "Stim. Type")) +
+  scale_x_continuous(limits = c(0, 6), breaks = seq(0, 6, by = 1),expand = c(0, 0) )
+ggsave(gsub(" ", "", paste(fdir_plot, "RidgePlot_AS_Reactiontime.png")), bg = "white")
 print(Ridge_RT)
 
 ### Accuracy
-Ridge_RT <- ggplot(Acc_across_session, aes(x = acc, y = session, fill=Type, color=Type)) +
+Ridge_Acc <- ggplot(Acc_across_session, aes(x = acc, y = session, fill=Type, color=Type)) +
   scale_fill_brewer(palette="Accent") +
   geom_density_ridges(alpha = .5, color = "white",
                       scale = 2.5, rel_min_height = .01) +
@@ -669,21 +670,23 @@ Ridge_RT <- ggplot(Acc_across_session, aes(x = acc, y = session, fill=Type, colo
   geom_vline(xintercept = 50, linetype = "dotted", color = "black") +
   annotate(geom="text",x = 50, y = 0.5, label = "Chance level", size = 4, angle = 0) +
   xlim(0, 100) +
-  guides(fill = guide_legend(title = "Stim. Type"))
-ggsave(paste(fdir_plot, "/RidgePlot_AS_Accuracy.png"))
-print(Ridge_RT)
+  guides(fill = guide_legend(title = "Stim. Type")) +
+  scale_x_continuous(limits = c(0, 100), breaks = seq(0, 100, by = 10),expand = c(0, 0) )
+ggsave(gsub(" ", "", paste(fdir_plot, "RidgePlot_AS_Accuracy.png")), bg = "white")
+print(Ridge_Acc)
 
 ### Sensitivity
-Ridge_RT <- ggplot(Sen_across_session, aes(x = d, y = session)) +
+Ridge_Sen <- ggplot(Sen_across_session, aes(x = d, y = session)) +
   scale_fill_brewer(palette="Accent") +
   geom_density_ridges(alpha = .5, color = "white",
                       scale = 2.5, rel_min_height = .01) +
   labs(x = "Sensitivity", y = "Session", title="D Prime across sessions") +
   guides(fill = "none") +
   theme_ridges() +
-  guides(fill = guide_legend(title = "Stim. Type"))
-ggsave(paste(fdir_plot, "/RidgePlot_AS_Sensitivity.png"))
-print(Ridge_RT)
+  guides(fill = guide_legend(title = "Stim. Type")) +
+  scale_x_continuous(limits = c(-2, 6), breaks = seq(-2, 6, by = 1),expand = c(0, 0) )
+ggsave(gsub(" ", "", paste(fdir_plot, "RidgePlot_AS_Sensitivity.png")), bg = "white")
+print(Ridge_Sen)
 
 
 # RT average
@@ -703,15 +706,15 @@ LinePLot <- ggplot(RT_avg_across_session, aes(x=session, y=RT_avg, group=Type, c
   labs(tag = "──  SE\n- - -  SD") +
   theme(plot.tag.position = c(0.9, 0.9),
         plot.tag = element_text(size = 10))
-ggsave(paste(fdir_plot, "/LinePlot_AS_RT_avg.png"))
+ggsave(gsub(" ", "", paste(fdir_plot, "LinePlot_AS_RT_avg.png")))
 print(LinePLot)
 
 # Acc average
-LinePLot <- ggplot(Acc_avg_across_session, aes(x=session, y=Acc_avg, group=Type, color=Type)) +
+LinePLot2 <- ggplot(Acc_avg_across_session, aes(x=session, y=Acc_avg, group=Type, color=Type)) +
   geom_line(position=position_dodge(.9), size=1) +
   geom_point(position=position_dodge(.9), size=2) +
   geom_errorbar(aes(ymin=Acc_avg-SD,
-                    ymax=Acc_avg+SD),width = 0,
+                    ymax=Acc_avg+SD),width = 0.2,
                 linetype = "dashed",
                 position=position_dodge(.9)) +
   geom_errorbar(aes(ymin=Acc_avg-SE,
@@ -724,9 +727,9 @@ LinePLot <- ggplot(Acc_avg_across_session, aes(x=session, y=Acc_avg, group=Type,
   theme(plot.tag.position = c(0.9, 0.9),
         plot.tag = element_text(size = 10) ) +
   labs(y = "Accuracy [%]",x = "Session", title="Average Accuracy across sessions") +
-  scale_y_continuous(limits = c(0, 110), breaks = seq(0, 100, by = 10),expand = c(0, 0) )
-ggsave(paste(fdir_plot, "/LinePlot_AS_Acc_avg.png"))
-print(LinePLot)
+  scale_y_continuous(limits = c(40, 110), breaks = seq(40, 100, by = 10),expand = c(0, 0) )
+ggsave(gsub(" ", "", paste(fdir_plot, "LinePlot_AS_Acc_avg.png")))
+print(LinePLot2)
 
 # Sen average
 LinePLot <- ggplot(Sen_avg_across_session, aes(x=session, y=Sen_avg, group=Sen_avg, color=Sen_avg)) +
@@ -744,7 +747,7 @@ LinePLot <- ggplot(Sen_avg_across_session, aes(x=session, y=Sen_avg, group=Sen_a
   theme(plot.tag.position = c(0.95, 0.9),
         plot.tag = element_text(size = 10) ) +
   ylim(0,3.5)
-ggsave(paste(fdir_plot, "/LinePlot_AS_Sen_avg.png"))
+ggsave(gsub(" ", "", paste(fdir_plot, "LinePlot_AS_Sen_avg.png")))
 print(LinePLot)
 
 
