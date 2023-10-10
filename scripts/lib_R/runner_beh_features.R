@@ -1,7 +1,3 @@
-# Maxplanck_BDA
-
-# cwd <- '/Users/muku/Desktop/Maxplanck_BDA/CSV_data/'
-
 # ~~~~~~~~~~~~ library
 #install.packages("hBayesDM", dependencies=TRUE)
 #Sys.setenv(BUILD_ALL='true')  # Build all the models on installation
@@ -26,30 +22,38 @@ fdir_get_across <-
 for (session in sessions) {
   print(session)
   
-  
-  fdir = paste(fdir_get_across, session, '/beh/')
+  fdir_orig <- gsub(" ", "", paste(fdir_get_across, session))
+  fdir = paste(fdir_orig, '/beh/')
   fdir <- gsub(" ", "", fdir)
-  
-  
-  concatenated_df <- c()
-  for (i in 1:length(list_of_files)) {
-    variable_names <- c("tmp_var")
-    df <- readr::read_csv(list_of_files[i], id = "file_name")
-    assign(variable_names[1], df)
-    print(df)
-    
-    # ~~~~~~~~~~~ pick up the correct, reaction time, participant name, letter, stimulus stype
-    tmp_var_relevant = tmp_var[c("key_resp.corr",
-                                 "key_resp.rt",
-                                 "participant",
-                                 "stim_images_order",
-                                 "type")]
-    tmp_var_relevant = tmp_var_relevant[complete.cases(tmp_var_relevant),] # remove NaN
+
+  if (dir.exists(fdir)) {
+    list_of_files <- list.files(
+      path = fdir,
+      recursive = FALSE,
+      pattern = "\\.csv$",
+      full.names = TRUE
+    )
     
     
-    # combine all the subjects
-    concatenated_df <- rbind(concatenated_df, tmp_var_relevant)
-  }
+    concatenated_df <- c()
+    for (i in 1:length(list_of_files)) {
+      variable_names <- c("tmp_var")
+      df <- readr::read_csv(list_of_files[i], id = "file_name")
+      assign(variable_names[1], df)
+      print(df)
+      
+      # ~~~~~~~~~~~ pick up the correct, reaction time, participant name, letter, stimulus stype
+      tmp_var_relevant = tmp_var[c("key_resp.corr",
+                                   "key_resp.rt",
+                                   "participant",
+                                   "stim_images_order",
+                                   "type")]
+      tmp_var_relevant = tmp_var_relevant[complete.cases(tmp_var_relevant),] # remove NaN
+      
+      
+      # combine all the subjects
+      concatenated_df <- rbind(concatenated_df, tmp_var_relevant)
+    }
   
   
   concatenated_df$stim_images_order <-
@@ -482,6 +486,7 @@ for (session in sessions) {
          paste(fdir_proc, "/Beh_data_sensitivity_tot_concatenated.csv"))
   write.csv(df_signaldetection_tot, fname)
   
+  }
 }
 
 
@@ -551,8 +556,12 @@ for (session in sessions){
                                            mean(RT_across_session$RT[RT_across_session$type=='Incongruent'])),
                                 SD = c(sd(RT_across_session$RT),
                                        sd(RT_across_session$RT[RT_across_session$type=='Congruent']),
-                                       sd(RT_across_session$RT[RT_across_session$type=='Incongruent']))
+                                       sd(RT_across_session$RT[RT_across_session$type=='Incongruent'])),
+                                SE = c(sd(RT_across_session$RT) / sqrt(nrow(RT_across_session)),
+                                       sd(RT_across_session$RT[RT_across_session$type=='Congruent']) / sqrt(length(RT_across_session$RT[RT_across_session$type=='Congruent'])),
+                                       sd(RT_across_session$RT[RT_across_session$type=='Incongruent']) / sqrt(length(RT_across_session$RT[RT_across_session$type=='Incongruent'])))
     )
+
     df_tmp_RT_avg <- cbind(df_tmp_RT_avg, session)
     
     RT_avg_across_session  <- rbind(RT_avg_across_session , df_tmp_RT_avg)
@@ -582,10 +591,16 @@ for (session in sessions){
                                              mean(concatenated_df$key_resp.corr[concatenated_df$type=='incongruent'])),
                                  SD = c(sd(concatenated_df$key_resp.corr),
                                         sd(concatenated_df$key_resp.corr[concatenated_df$type=='congruent']),
-                                        sd(concatenated_df$key_resp.corr[concatenated_df$type=='incongruent']))
-    )
+                                        sd(concatenated_df$key_resp.corr[concatenated_df$type=='incongruent'])),
+                                 SE = c(sd(concatenated_df$key_resp.corr) / sqrt(length(concatenated_df$key_resp.corr)),
+                                        sd(concatenated_df$key_resp.corr[concatenated_df$type=='congruent']) / sqrt(length(concatenated_df$key_resp.corr[concatenated_df$type=='congruent'])),
+                                        sd(concatenated_df$key_resp.corr[concatenated_df$type=='incongruent']) 
+                                        / sqrt(length(concatenated_df$key_resp.corr[concatenated_df$type=='incongruent'])))
+                                 )
+    
     df_tmp_acc_avg['Acc_avg'] <- df_tmp_acc_avg['Acc_avg'] *100
     df_tmp_acc_avg['SD'] <- df_tmp_acc_avg['SD'] *100
+    df_tmp_acc_avg['SE'] <- df_tmp_acc_avg['SE'] *100
     
     df_tmp_acc_avg <- cbind(df_tmp_acc_avg, session)
     
@@ -609,6 +624,7 @@ for (session in sessions){
     df_tmp_sen_avg <- data.frame(Type = c('Total'),
                                  Sen_avg = c(mean(df_sen$d)),
                                  SD = c(sd(df_sen$d)),
+                                 SE = c(sd(df_sen$d) / sqrt(length(df_sen$d))),
                                  Sen_bias_avg = c(sd(df_sen$c))
     )
     df_tmp_sen_avg <- cbind(df_tmp_sen_avg, session)
@@ -650,6 +666,8 @@ Ridge_RT <- ggplot(Acc_across_session, aes(x = acc, y = session, fill=Type, colo
   labs(x = "Accuracy [%]", y = "Session", title="Accuracy across sessions") +
   guides(fill = "none") +
   theme_ridges() +
+  geom_vline(xintercept = 50, linetype = "dotted", color = "black") +
+  annotate(geom="text",x = 50, y = 0.5, label = "Chance level", size = 4, angle = 0) +
   xlim(0, 100) +
   guides(fill = guide_legend(title = "Stim. Type"))
 ggsave(paste(fdir_plot, "/RidgePlot_AS_Accuracy.png"))
@@ -670,58 +688,64 @@ print(Ridge_RT)
 
 # RT average
 LinePLot <- ggplot(RT_avg_across_session, aes(x=session, y=RT_avg, group=Type, color=Type)) +
-  geom_line(position=position_dodge(.9)) +
-  geom_point(position=position_dodge(.9))+
+  geom_line(position=position_dodge(.9), size=1) +
+  geom_point(position=position_dodge(.9), size=2)+
   geom_errorbar(aes(ymin=RT_avg-SD,
-                    ymax=RT_avg+SD), width=.2,
+                    ymax=RT_avg+SD),width = 0,
+                linetype = "dashed",
                 position=position_dodge(.9)) +
+  geom_errorbar(aes(ymin=RT_avg-SE,
+                    ymax=RT_avg+SE), width=.2,
+                position=position_dodge(.9)) +
+  scale_color_brewer(palette="Accent") +
   labs(y = "Reaction time [s]",x = "Session", title="Average reaction time across sessions")  + 
-  ylim(0,3)
+  ylim(0,3) +
+  labs(tag = "──  SE\n- - -  SD") +
+  theme(plot.tag.position = c(0.9, 0.9),
+        plot.tag = element_text(size = 10))
 ggsave(paste(fdir_plot, "/LinePlot_AS_RT_avg.png"))
 print(LinePLot)
 
 # Acc average
-SD_max <- list()
-SD_min <- list()
-for (i in 1:length(Acc_avg_across_session$Type)) {
-  tmp_SD_max = Acc_avg_across_session$Acc_avg[i] + Acc_avg_across_session$SD[i]
-  if (tmp_SD_max > 100) {
-    SD_max[i]<-100
-  } else {
-    SD_max[i]<-tmp_SD_max
-  }
-  
-  tmp_SD_min = Acc_avg_across_session$Acc_avg[i] - Acc_avg_across_session$SD[i]
-  if (tmp_SD_min < 0) {
-    SD_min[i]<-0
-  } else {
-    SD_min[i]<-tmp_SD_min
-  }
-}
-SD_max <- unlist(SD_max, recursive=FALSE)
-SD_min <- unlist(SD_min, recursive=FALSE)
 LinePLot <- ggplot(Acc_avg_across_session, aes(x=session, y=Acc_avg, group=Type, color=Type)) +
-  geom_line(position=position_dodge(.9)) +
-  geom_point(position=position_dodge(.9))+
-  #geom_boxplot(aes(color = Type, fill = Type, show.legend = FALSE)) +
-  geom_errorbar(aes(ymin=SD_min, ymax=SD_max),
-                width=.2, position=position_dodge(.9)) +
-  ylim(0,100) +
-  labs(y = "Accuracy [%]",x = "Session", title="Average Accuracy across sessions")
+  geom_line(position=position_dodge(.9), size=1) +
+  geom_point(position=position_dodge(.9), size=2) +
+  geom_errorbar(aes(ymin=Acc_avg-SD,
+                    ymax=Acc_avg+SD),width = 0,
+                linetype = "dashed",
+                position=position_dodge(.9)) +
+  geom_errorbar(aes(ymin=Acc_avg-SE,
+                    ymax=Acc_avg+SE), width=.2,
+                position=position_dodge(.9)) +
+  geom_hline(yintercept = 50, linetype = "dotted", color = "black") +
+  annotate(geom="text",x = 0.7, y = 52, label = "Chance level", size = 4, angle = 0) +
+  scale_color_brewer(palette="Accent") +
+  labs(tag = "──  SE\n- - -  SD") +
+  theme(plot.tag.position = c(0.9, 0.9),
+        plot.tag = element_text(size = 10) ) +
+  labs(y = "Accuracy [%]",x = "Session", title="Average Accuracy across sessions") +
+  scale_y_continuous(limits = c(0, 110), breaks = seq(0, 100, by = 10),expand = c(0, 0) )
 ggsave(paste(fdir_plot, "/LinePlot_AS_Acc_avg.png"))
 print(LinePLot)
 
 # Sen average
 LinePLot <- ggplot(Sen_avg_across_session, aes(x=session, y=Sen_avg, group=Sen_avg, color=Sen_avg)) +
-  geom_line(position=position_dodge(.9)) +
-  geom_point(position=position_dodge(.9))+
-  #geom_boxplot(aes(color = Type, fill = Type, show.legend = FALSE)) +
+  geom_line(position=position_dodge(.9), size=1) +
+  geom_point(position=position_dodge(.9), size=2) +
   geom_errorbar(aes(ymin=Sen_avg-SD,
-                    ymax=Sen_avg+SD), width=.2,
+                    ymax=Sen_avg+SD),width = 0,
+                linetype = "dashed",
+                position=position_dodge(.9)) +
+  geom_errorbar(aes(ymin=Sen_avg-SE,
+                    ymax=Sen_avg+SE), width=.2,
                 position=position_dodge(.9)) +
   labs(y = "Sensitivity [dprime]",x = "Session", title="Average D Prime across sessions") +
+  labs(tag = "──  SE\n- - -  SD") +
+  theme(plot.tag.position = c(0.95, 0.9),
+        plot.tag = element_text(size = 10) ) +
   ylim(0,3.5)
 ggsave(paste(fdir_plot, "/LinePlot_AS_Sen_avg.png"))
 print(LinePLot)
+
 
 
