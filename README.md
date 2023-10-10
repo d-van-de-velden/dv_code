@@ -23,15 +23,10 @@ Get it with `pip install git+ssh://git@github.com/d-van-de-velden/dv_code.git`
 
 ### What this toolbox can do
   Furthermore, the functionalities of this toolbox should be explained:
-  1. One thing
-  2. one
-  3. one
-  4. one
-    - dajsd
-  6. eoine
-  7. one
-  8. eine
-    - dajsd
+1. Downloading DICOM files and organizing a BIDS structure.
+2. Preprocessing of structural and functional MR datasets.
+3. Analyzing behavioral task data (D-Prime analysis, hDD-Modelling)
+4. Applying approaches of 1st and 2nd level analysis on functional MR datasets. 
 
 
 ## Getting started
