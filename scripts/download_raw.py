@@ -169,31 +169,32 @@ def download_datashare_behavioral(params):
                 # Explicity exclude certain file names
                 if file.name.startswith('_'):
                     continue
-
-                tmp_fname_idents = os.path.splitext(os.path.basename(file.name))[0]
-                tmp_fname_idents = os.path.splitext(os.path.basename(tmp_fname_idents))[0]
-
-                idents  = tmp_fname_idents.split('_')
-                subjID  = idents[0]
-                tmp_str_BIDS_session = idents[1].replace("-0", "-")
-                studyID = idents[2]
-                studyID = studyID + '-Behavioral'
                 
-                # Download if it doesn't exist
-                local_file = f'{fdir_session}/{file.name}'
+                if file.file_type != 'dir':
+                    tmp_fname_idents = os.path.splitext(os.path.basename(file.name))[0]
+                    tmp_fname_idents = os.path.splitext(os.path.basename(tmp_fname_idents))[0]
 
-                if os.path.exists(local_file) == False:
+                    idents  = tmp_fname_idents.split('_')
+                    subjID  = idents[0]
+                    tmp_str_BIDS_session = idents[1].replace("-0", "-")
+                    studyID = idents[2]
+                    studyID = studyID + '-Behavioral'
+                    
+                    # Download if it doesn't exist
+                    local_file = f'{fdir_session}/{file.name}'
 
-                    # Download zip file
-                    print(f'# Downloading {file.path} to {fdir_session}')
+                    if os.path.exists(local_file) == False:
 
-                    check_make_dir(fdir_session)
-                    datashare.get_file(file, local_file)
+                        # Download zip file
+                        print(f'# Downloading {file.path} to {fdir_session}')
 
-                    # Keep track of new data
-                    new_raw_files.append(local_file)
-                    participant = file.name.split('_')[0]
-                    new_participants_sessions.add((participant, session))
+                        check_make_dir(fdir_session)
+                        datashare.get_file(file, local_file)
+
+                        # Keep track of new data
+                        new_raw_files.append(local_file)
+                        participant = file.name.split('_')[0]
+                        new_participants_sessions.add((participant, session))
                 
     # In the end update/create participant.tsv 
     update_participants(params)

@@ -32,7 +32,7 @@ def update_participants(params):
             fname_dcm_dat = [
                 item
                 for item in subjects_dir_entry
-                if item[-4:] == '.zip' and item[-9:] != '_logs.zip'
+                if item[-4:] == '.zip' and item[-9:] != '_logs.zip' and 'Behavioral' not in item
             ]
             
             for i_fname in fname_dcm_dat:
@@ -42,6 +42,7 @@ def update_participants(params):
                 studyID = subj_info[2]
                 
                 dat_w_participants_tsv.append([str(participant_id), str(ses), str(studyID)])
+    
 
     fname_participants_tsv = params.get('fdir_data') + 'participants.tsv'
     if os.path.exists(fname_participants_tsv) == False:

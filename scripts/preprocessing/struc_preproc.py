@@ -116,16 +116,16 @@ def do_FS_recon(fdir_analysis="", participants=None, use_HPC = 0, params=None):
                 #|& tee  ${dir_echo}/o.01_suma_makespec_${subj}.txt
                 #'''
 
-                print('# Bringing anatomical derivative files to folder..')
+                print('# INFO # Bringing anatomical derivative files to folder..')
                 fdir_derivatives = (params.get('fdir_proc_pre')
                                     + '/' + participants[iSubj]
                                     + '/' + session + '/anat/'
                                     )
                 check_make_dir(fdir_derivatives)
                 # Source
-                fname_T1w_nu0 = (params.get('fdir_fs') + '/'
+                fname_T1w_nu0 = (fdir_FS_session + '/'
                                 + participants[iSubj] + '/mri/nu.mgz')
-                fname_T1w_parc0 = (params.get('fdir_fs') + '/'
+                fname_T1w_parc0 = (fdir_FS_session + '/'
                                 + participants[iSubj] + '/mri/aparc+aseg.mgz')
 
                 # Target
@@ -140,10 +140,12 @@ def do_FS_recon(fdir_analysis="", participants=None, use_HPC = 0, params=None):
                 fname_T1w_parc2 = (fdir_derivatives + participants[iSubj] + '_' + session + '_T1w_aparc+aseg.nii.gz')
 
                 options = '-it mgz -ot nii'
-                os.system(f'FREESURFER mri_convert {options} {fname_T1w_nu1} {fname_T1w_nu2}')
-                os.remove(fname_T1w_nu1)
-                os.system(f'FREESURFER mri_convert {options} {fname_T1w_parc1} {fname_T1w_parc2}')
-                os.remove(fname_T1w_parc1)
+                if os.path.exists(fname_T1w_nu2) == False:
+                    os.system(f'FREESURFER mri_convert {options} {fname_T1w_nu1} {fname_T1w_nu2}')
+                    os.remove(fname_T1w_nu1)
+                if os.path.exists(fname_T1w_parc2) == False :
+                    os.system(f'FREESURFER mri_convert {options} {fname_T1w_parc1} {fname_T1w_parc2}')
+                    os.remove(fname_T1w_parc1)
 
                 options = ''
                 os.system(f'FSL fslreorient2std {options} {fname_T1w_nu2} {fname_T1w_nu2}')

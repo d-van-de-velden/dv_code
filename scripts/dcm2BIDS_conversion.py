@@ -69,6 +69,10 @@ def convert_dcm2BIDS(params):
 
 
                     fdir_BIDS_subj = params.get('fdir_data') + 'sub-' + item[:4] + '/' + session + '/'
+                    
+                    if os.path.exists(fdir_BIDS_subj) == False:
+                        check_make_dir(fdir_BIDS_subj)
+                        
                     fdir_BIDS_dir_entry = os.listdir(fdir_BIDS_subj)
                     do_convert = False
                     if os.path.exists(fdir_BIDS_subj) == False:
