@@ -43,6 +43,7 @@ def do_func_preproc(participants=None, params=None,
         tmp_fdir_subj = params.get('fdir_data') + participants[iSubj]
 
         sessions = os.listdir(tmp_fdir_subj)
+        sessions.sort()
         for session in sessions:
             print(session)
             tmp_fdir_func = f'{tmp_fdir_subj}/{session}/func/'
