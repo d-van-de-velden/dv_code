@@ -815,17 +815,17 @@ def func_apply_glm_groupaverage_BOLD(participants=None, params=None, smoothing_f
                                 observed_timeseries  = np.array([0,0])
                                 predicted_timeseries = np.array([0,0])
                                 for irun in np.arange(len(fmri_runs)):
-                                    tmp_observed_timeseries = ROI_masker.fit_transform(fmri_runs[irun-1])
+                                    tmp_observed_timeseries  = ROI_masker.fit_transform(fmri_runs[irun-1])
                                     tmp_predicted_timeseries = ROI_masker.fit_transform(fmri_maps.predicted[irun-1])
 
-                                    observed_timeseries = np.vstack([observed_timeseries, tmp_observed_timeseries])
+                                    observed_timeseries  = np.vstack([observed_timeseries, tmp_observed_timeseries])
                                     predicted_timeseries = np.vstack([predicted_timeseries, tmp_predicted_timeseries])
                                 
-                                observed_timeseries = observed_timeseries[1::, :]
+                                observed_timeseries  = observed_timeseries[1::, :]
                                 predicted_timeseries = predicted_timeseries[1::, :]
                                 
                                 # Get time indices of Stimuli contrast start
-                                tmp_contrast_idx = events
+                                tmp_contrast_idx = events.loc[contrast_id]
                                 
                                 for idx in tmp_contrast_idx:
                                     
@@ -835,6 +835,10 @@ def func_apply_glm_groupaverage_BOLD(participants=None, params=None, smoothing_f
                                 
                                 plt.figure
                                 plt.plot(np.linspace(0,10), avg_BOLD_tc)
+                                
+                                fname_avg_BOLD_tc = fdir_der_firstlvl_final + f"{subjID}_{ses}_avg_BOLD_{str_contrast}_tSNR{tSNR_tresh}.nii"
+                                np.save(fname_avg_BOLD_tc, avg_BOLD_tc,
+                                        allow_pickle=True, fix_imports=True)
                                 
                                 ## colors for each of the clusters
                                 #colors = ["blue", "navy", "purple", "magenta", "olive", "teal"]
