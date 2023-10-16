@@ -607,15 +607,15 @@ def func_apply_glm_groupaverage_BOLD(participants=None, params=None, smoothing_f
     contrast_masks = {}
     for i, contrast_id in enumerate(contrast):
         loadingBar(i, len(contrast), contrast_id)
-        z_map = fmri_maps.compute_contrast(contrast_id, output_type="z_score")
         str_contrast = contrast_id.replace(" ", "_")
+        
         fdir_der_firstlvl_final = (params.get('fdir_proc')
                                 + '/1st_level/'
                                 + subjID + '/' + ses + '/'
                                 )
-        fname_avg_zmap = fdir_der_firstlvl_final + f"{subjID}_{ses}_FE_avg_z_{str_contrast}_tSNR{tSNR_tresh}.nii"
-        nib.save(z_map, fname_avg_zmap)
         
+        fname_avg_zmap = fdir_der_firstlvl_final + f"{subjID}_{ses}_FE_avg_z_{str_contrast}_tSNR{tSNR_tresh}.nii"
+
         fdir_group_firstlvl_final = ( params.get('fdir_proc') 
                                     + '/1st_level/Group/' 
                                     + session + '/'
@@ -627,9 +627,10 @@ def func_apply_glm_groupaverage_BOLD(participants=None, params=None, smoothing_f
         Mask_Groupavg_FDR_zmap = binarize_img(Groupavg_FDR_zmap, threshold=0.1)
 
         contrast_masks[i,1] = Mask_Groupavg_FDR_zmap
-        
-    
-        
+
+
+
+
     all_sessions = list()
     runs_count = 0
     for iSubj in range(len(participants)):
