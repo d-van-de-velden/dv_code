@@ -565,7 +565,7 @@ def func_apply_glm_fixed_effect(participants=None, params=None, smoothing_fwhm=8
             # Z scores              
             ALL_subj_image_array = np.array(ALL_subj_image_array)
             all_avg_zmap = np.mean(ALL_subj_image_array, axis=0)
-            fname_avg_zmap = fdir_group_firstlvl_final + f"GroupN{subj_count}_{ses}_Nruns_{runs_count}_FE_avg_z_{str_contrast}_tSNR{tSNR_tresh}.nii"
+            fname_avg_zmap = fdir_group_firstlvl_final + f"GroupN{subj_count}_{ses}_FE_avg_z_{str_contrast}_tSNR{tSNR_tresh}.nii"
                             
             all_avg_zmap_img = nib.Nifti1Image(all_avg_zmap, func.affine)
             nib.save(img=all_avg_zmap_img, filename=fname_avg_zmap)
@@ -583,7 +583,7 @@ def func_apply_glm_fixed_effect(participants=None, params=None, smoothing_fwhm=8
                                         cluster_threshold=0,
                                         two_sided=False)
             print(f"Contrast maps are thresholded by:\n   {'fdr'} p<{0.05:.3f} threshold: {threshold:.3f}")
-            fname_avg_FDR_zmap = fdir_group_firstlvl_final + f"GroupN{subj_count}_{ses}_Nruns_{runs_count}_FE_avg_z_FDR_{str_contrast}_tSNR{tSNR_tresh}.nii"
+            fname_avg_FDR_zmap = fdir_group_firstlvl_final + f"GroupN{subj_count}_{ses}_FE_avg_z_FDR_{str_contrast}_tSNR{tSNR_tresh}.nii"
             nib.save(img=all_avg_zmap_FDR, filename=fname_avg_FDR_zmap)
             
     return
@@ -885,7 +885,7 @@ def func_apply_glm_groupaverage_BOLD(participants=None, params=None, smoothing_f
                             )
         
         
-        BOLD_fMRI_dataframe = pd.DataFrame(columns=['subject', 'timepoint','signal', 'condition'])
+        BOLD_fMRI_dataframe = pd.DataFrame(columns=['subject', 'timepoint','signal', 'condition', 'session'])
         
         check_make_dir(fdir_group_firstlvl_final)
         for i, contrast_id in enumerate(contrast):
@@ -921,11 +921,12 @@ def func_apply_glm_groupaverage_BOLD(participants=None, params=None, smoothing_f
                 timepoints = np.arange(-1, all_avg_BOLD.shape[0]-1)
                 
                 idx_counter = 0
-                tmp_dataframe = pd.DataFrame(columns=['subject', 'timepoint','signal', 'condition'])
+                tmp_dataframe = pd.DataFrame(columns=['subject', 'timepoint','signal', 'condition', 'session'])
                 for kk, tmp_data_BOLD in enumerate(ALL_avgBOLD_subj):
                     for k, i_tp in enumerate(timepoints):
                         tmp_dataframe.loc[idx_counter] = {'subject':str(kk), 'timepoint':i_tp, 
-                                        'signal': tmp_data_BOLD[k], 'condition': tmp_trial_type}
+                                        'signal': tmp_data_BOLD[k], 'condition': tmp_trial_type,
+                                        'session':session}
                         
                         idx_counter = idx_counter + 1 
                 
@@ -938,7 +939,7 @@ def func_apply_glm_groupaverage_BOLD(participants=None, params=None, smoothing_f
                                     
                 np.save(fname_all_avg_BOLD, BOLD_fMRI_dataframe)
                 
-
+            # TODO: Add relation plots to visualize session depended changes (https://seaborn.pydata.org/examples/timeseries_facets.html)
             plt.figure
             sns.lineplot(x="timepoint", y="signal",
                 hue="condition",data=BOLD_fMRI_dataframe)
