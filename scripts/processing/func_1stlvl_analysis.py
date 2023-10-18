@@ -18,17 +18,14 @@ import pandas as pd
 from dv_code.scripts.misc import check_make_dir
 from dv_code.scripts.misc.analysis_feedback import loadingBar
 from dv_code.scripts.misc.select_filetype import get_only_nifti
-from nilearn import glm, image, masking, plotting
+from nilearn import plotting
 from nilearn.glm.first_level import (FirstLevelModel,
                                     make_first_level_design_matrix)
-from nilearn.reporting import make_glm_report
 from nilearn.glm import threshold_stats_img
-from nilearn.maskers import NiftiSpheresMasker
-from nilearn.reporting import get_clusters_table
 import matplotlib.pyplot as plt
 from nilearn.image import binarize_img
 from nilearn.maskers import NiftiMasker
-
+import seaborn as sns
 
 
 def func_apply_glm_treshholded(participants=None, params=None, smoothing_fwhm=8, tSNR_tresh=30, contrast=None):
@@ -339,7 +336,7 @@ def func_fit_glm(func=None, tr=2, events=None,
 
     return
 
-def func_apply_glm_fixed_effect(participants=None, params=None, smoothing_fwhm=8, tSNR_tresh=30, contrast=None, contrast_coords=None):
+def func_apply_glm_fixed_effect(participants=None, params=None, smoothing_fwhm=8, tSNR_tresh=30, contrast=None):
     
     """_summary_
     Iterate across subjects, sessions, runs. Calculate tSNR and only use run for GLM 
@@ -591,7 +588,7 @@ def func_apply_glm_fixed_effect(participants=None, params=None, smoothing_fwhm=8
             
     return
 
-def func_apply_glm_groupaverage_BOLD(participants=None, params=None, smoothing_fwhm=8, tSNR_tresh=30, contrast=None, contrast_coords=None):
+def func_apply_glm_groupaverage_BOLD(participants=None, params=None, smoothing_fwhm=8, tSNR_tresh=30, contrast=None):
     
     """_summary_
     Iterate across subjects, sessions, runs. Calculate tSNR and only use run for GLM 
@@ -603,7 +600,8 @@ def func_apply_glm_groupaverage_BOLD(participants=None, params=None, smoothing_f
     if participants is None:
         participants = []
     check_make_dir(params.get('fdir_proc_pre'))
-        
+    
+    participants = list( np.unique(participants))
     print(
         f'| TITLE | #### Constructing average BOLD response per cond. per subj. of functional MR data ####'
     )
@@ -622,7 +620,7 @@ def func_apply_glm_groupaverage_BOLD(participants=None, params=None, smoothing_f
                                         )
             if os.path.isdir(fdir_group_firstlvl_final):
                 fname_avg_FDR_zmap = (fdir_group_firstlvl_final 
-                                    + f"GroupN{subj_count}_{session}_Nruns_{runs_count}_FE_avg_z_FDR_{str_contrast}_tSNR{tSNR_tresh}.nii")
+                                    + f"GroupN38_{session}_Nruns_104_FE_avg_z_FDR_{str_contrast}_tSNR{tSNR_tresh}.nii")
                 Groupavg_FDR_zmap  = nib.load(fname_avg_FDR_zmap)
                 
                 Mask_Groupavg_FDR_zmap = binarize_img(Groupavg_FDR_zmap, threshold=0.1)
@@ -631,7 +629,6 @@ def func_apply_glm_groupaverage_BOLD(participants=None, params=None, smoothing_f
             else:
                 print('| INFO | Skip session...' )
     print(f'| INFO | -> DONE ~~~ Creating the masks based on group-averaged contrast results ~~~')
-
 
 
     all_sessions = list()
@@ -667,7 +664,7 @@ def func_apply_glm_groupaverage_BOLD(participants=None, params=None, smoothing_f
                     if len(runs) > 0:
                         
                         all_events = pd.DataFrame()
-                        
+                        all_runID = []
                         for run in runs:
                             
                             # Grab information from filename
@@ -778,8 +775,7 @@ def func_apply_glm_groupaverage_BOLD(participants=None, params=None, smoothing_f
                             fmri_glm = FirstLevelModel(
                                 t_r=tr,
                                 minimize_memory=False,
-                                signal_scaling=False,
-                                high_pass=0.008,
+                                signal_scaling=(0, 1),    # 0,1,(0, 1)
                                 smoothing_fwhm=smoothing_fwhm)
 
                             # fit model
@@ -795,103 +791,102 @@ def func_apply_glm_groupaverage_BOLD(participants=None, params=None, smoothing_f
                             
 
                             print("     # Make subject-average BOLD response for each trial type")
+                            
+                            pre_stim  = -1
+                            post_stim = +10
                             # Make nifti for each contrast
+                            ident_runs = list (np.unique(all_events['run']))
                             for i, contrast_id in enumerate(contrast):
-                                loadingBar(i, len(contrast), contrast_id)
-                                z_map = fmri_maps.compute_contrast(contrast_id, output_type="z_score")
+                                #loadingBar(i, len(contrast), contrast_id)
+                                #z_map = fmri_maps.compute_contrast(contrast_id, output_type="z_score")
                                 str_contrast = contrast_id.replace(" ", "_")
 
                                 tmp_trial_type = str_contrast.removesuffix('_-_null_event')
                                 
-                                if sum ( all_events['trial_type'].str.contains(tmp_trial_type) ) > 0:
+                                got_session = False
+                                for i_mask in contrast_masks:
+                                    if i_mask[0] == session:
+                                        got_session = True
+                                    
+                                N_evts_trial_type = sum ( all_events['trial_type'].str.contains(tmp_trial_type))
+                                if (N_evts_trial_type > 0) & ( got_session == True ):
+                                    
                                     tmp_contrast_masks = contrast_masks[session, i,1]
                                                                         
                                     ROI_masker = NiftiMasker(tmp_contrast_masks,
-                                                            standardize='psc', t_r=tr)
+                                                            standardize='psc', t_r=tr,
+                                                            detrend=True)
+                                    ROI_nifti = ROI_masker.mask_img
                                     
-                                    
-                                    tmp_BOLD_tc = np.empty([])
-                                    tmp_BOLD_tc2 = np.empty([])
-                                    for irun in np.arange(len(fmri_runs)):
-                                        tmp_observed_timeseries  = ROI_masker.fit_transform(fmri_runs[irun-1])
-                                        tmp_predicted_timeseries = ROI_masker.fit_transform(fmri_maps.predicted[irun-1])
-
-                                        
-                                        tmp_evt_cond = (all_events['run'] == ('run-0' + str(irun+1)))
-                                        tmp_con_cond = (all_events['trial_type'] == tmp_trial_type)
-                                        
-                                        tmp_events   = all_events[tmp_evt_cond].onset.values
-                                        tmp_con_cond = tmp_con_cond[tmp_evt_cond]
-                                        tmp_events   = ( tmp_events / tr )
-                                        
-                                        tmp_contrast_idx = np.floor( tmp_events[tmp_con_cond] )
-                                        
-                                        
-                                        for j, evt_idx in enumerate(tmp_contrast_idx):
-                                            evt_idx = int(evt_idx)
+                                    if sum ( sum( sum( ROI_nifti.get_fdata() ) )) > 0:
+                                        tmp_BOLD_tc  = list()
+                                        tmp_BOLD_tc2 = list()
+                                        for irun in np.arange(len(fmri_runs)):
+                                            tmp_observed_timeseries = ROI_masker.fit_transform(fmri_runs[irun])
+                                            tmp_observed_timeseries = np.mean( tmp_observed_timeseries, 1)
                                             
-                                            contrast_idx_start = evt_idx-1
-                                            contrast_idx_end   = evt_idx+9
+                                            tmp_predicted_timeseries = ROI_masker.fit_transform(fmri_maps.predicted[irun])
+                                            tmp_predicted_timeseries = np.mean( tmp_predicted_timeseries, 1)
+                                                                                        
+                                            tmp_evt_cond = (all_events['run'] == ident_runs[irun])
+                                            tmp_con_cond = (all_events['trial_type'] == tmp_trial_type)
                                             
-                                            if contrast_idx_end > len(tmp_predicted_timeseries):
-                                                contrast_idx_end = len(tmp_predicted_timeseries)
+                                            tmp_events   = all_events[tmp_evt_cond].onset.values
+                                            tmp_con_cond = tmp_con_cond[tmp_evt_cond]
+                                            tmp_events   = ( tmp_events / tr )
+                                            
+                                            tmp_contrast_idx = np.floor( tmp_events[tmp_con_cond] )
                                             
                                             
-                                            tmp_BOLD_tc_loop  = np.mean( 
-                                                                    np.abs( tmp_predicted_timeseries[ contrast_idx_start:contrast_idx_end, : ]), 1
-                                                                    )
-                                            tmp_BOLD_tc_loop2 = np.mean( 
-                                                                    np.abs( tmp_observed_timeseries[ contrast_idx_start:contrast_idx_end, : ]), 1
-                                                                    )
-                                            
-                                            #tmp_BOLD_tc_loop = tmp_BOLD_tc_loop - np.mean(tmp_BOLD_tc_loop)
-                                            tmp_BOLD_tc  = np.append(tmp_BOLD_tc, tmp_BOLD_tc_loop)
-                                            tmp_BOLD_tc2 = np.append(tmp_BOLD_tc2, tmp_BOLD_tc_loop2)
-                                            
-                                    tmp_BOLD_tc  = tmp_BOLD_tc[1::]
-                                    tmp_BOLD_tc2 = tmp_BOLD_tc2[1::]
-                                    tmp_BOLD_tc  = np.reshape(tmp_BOLD_tc,
-                                                            (int( len(tmp_contrast_idx) * len(fmri_runs) ) ,
-                                                            int( (len(tmp_BOLD_tc)/ ( len(tmp_contrast_idx) * len(fmri_runs) )
-                                                            ))) )
-                                    tmp_BOLD_tc2  = np.reshape(tmp_BOLD_tc2,
-                                                            (int( len(tmp_contrast_idx) * len(fmri_runs) ) ,
-                                                            int( (len(tmp_BOLD_tc2)/ ( len(tmp_contrast_idx) * len(fmri_runs) )
-                                                            ))) )
-                                    avg_BOLD_tc = np.mean(tmp_BOLD_tc,0)
-                                    avg_BOLD_tc2 = np.mean(tmp_BOLD_tc2,0)
-                                        
-                                    #plt.figure
-                                    #x_ = np.arange(-1,len(avg_BOLD_tc)-1)
-                                    #plt.plot(x_,avg_BOLD_tc)
-                                    #plt.plot(x_,avg_BOLD_tc2, linestyle='--')
-                                    #plt.xlim((-1, 10))
-                                    #plt.ylim((-0.2, 1))
-                                        
-                                    
-                                    fdir_der_firstlvl = (params.get('fdir_proc')
-                                                + '/1st_level/'
-                                                + subjID + '/' + ses + '/')
+                                            for j, evt_idx in enumerate(tmp_contrast_idx):
+                                                evt_idx = int(evt_idx)
                                                 
-                                    fname_avg_BOLD_tc = ( fdir_der_firstlvl
-                                                + f"{subjID}_{ses}_avg_BOLD_{tmp_trial_type}_tSNR{tSNR_tresh}.nii" )
-                                    np.save(fname_avg_BOLD_tc, avg_BOLD_tc,
-                                            allow_pickle=True, fix_imports=True)
-                                    
-                                    
-                                
-                            print("     # Done\n")
-                    
+                                                contrast_idx_start = evt_idx + pre_stim
+                                                contrast_idx_end   = evt_idx + post_stim
+                                                
+                                                if contrast_idx_end > len(tmp_predicted_timeseries):
+                                                    contrast_idx_end = len(tmp_predicted_timeseries)
+                                                
+                                                
+                                                tmp_BOLD_tc_loop  = tmp_predicted_timeseries[ contrast_idx_start:contrast_idx_end]
 
+                                                tmp_BOLD_tc_loop2 = tmp_observed_timeseries[ contrast_idx_start:contrast_idx_end]
+                                                
+                                                tmp_BOLD_tc.append(tmp_BOLD_tc_loop)
+                                                tmp_BOLD_tc2.append(tmp_BOLD_tc_loop2)
+                                        
+                                        tmp_BOLD_tc = tmp_BOLD_tc[1::]   
+                                        tmp_BOLD_tc2 = tmp_BOLD_tc2[1::]
+                                        tmp_BOLD_tc  = np.array(tmp_BOLD_tc)
+                                        tmp_BOLD_tc2 = np.array(tmp_BOLD_tc2)
+                                        
+                                        
+                                        avg_BOLD_tc = np.median(tmp_BOLD_tc,0)
+                                        avg_BOLD_tc2 = np.median(tmp_BOLD_tc2,0)
+                                                                                
+                                                                                
+                                        fdir_der_firstlvl = (params.get('fdir_proc')
+                                                    + '/1st_level/'
+                                                    + subjID + '/' + ses + '/')
+                                                    
+                                        fname_avg_BOLD_tc = ( fdir_der_firstlvl
+                                                    + f"{subjID}_{ses}_avg_BOLD_{tmp_trial_type}_tSNR{tSNR_tresh}" )
+                                        np.save(fname_avg_BOLD_tc, avg_BOLD_tc,
+                                                allow_pickle=True, fix_imports=True)
+                            print("     # Done\n")
 
     # Average all contrasts and runs of all sessions across subjects 
-    all_sessions = list( np.unique(all_sessions))
+    all_sessions = sessions
     for session in all_sessions:
         print(session)
         fdir_group_firstlvl_final = ( params.get('fdir_proc') 
                                 + '/1st_level/Group/' 
                                 + session + '/'
                             )
+        
+        
+        BOLD_fMRI_dataframe = pd.DataFrame(columns=['subject', 'timepoint','signal', 'condition'])
+        
         check_make_dir(fdir_group_firstlvl_final)
         for i, contrast_id in enumerate(contrast):
             loadingBar(i, len(contrast), contrast_id)
@@ -899,30 +894,61 @@ def func_apply_glm_groupaverage_BOLD(participants=None, params=None, smoothing_f
 
             tmp_trial_type = str_contrast.removesuffix('_-_null_event')
                                 
-            if sum ( all_events['trial_type'].str.contains(tmp_trial_type) ) > 0:
-                                    
-                ALL_tmp_avgBOLD_subj = list()
-                subj_count = 0
-                for j, subjID in enumerate(participants):
-                    tmp_fdir_firstlvl = ( params.get('fdir_proc') 
-                                            + '/1st_level/'
-                                            + subjID + '/' + ses + '/'
-                                        )
-                    if os.path.exists(tmp_fdir_firstlvl):
-                        fname_avgBOLD_subj = tmp_fdir_firstlvl = ( fdir_der_firstlvl
-                                                    + f"{subjID}_{ses}_avg_BOLD_{tmp_trial_type}_tSNR{tSNR_tresh}.nii" )
-                        if os.path.exists(fname_avgBOLD_subj):
-                            tmp_avgBOLD_subj   = np.load(fname_avgBOLD_subj)
-                            ALL_tmp_avgBOLD_subj.append( tmp_avgBOLD_subj )
-                            subj_count = subj_count +1
+            ALL_tmp_avgBOLD_subj = list()
+            subj_count = 0
+            for j, subjID in enumerate(participants):
+                tmp_fdir_firstlvl = ( params.get('fdir_proc') 
+                                        + '/1st_level/'
+                                        + subjID + '/' + ses + '/'
+                                    )
+                if os.path.exists(tmp_fdir_firstlvl):
+                    fname_avgBOLD_subj = tmp_fdir_firstlvl = ( tmp_fdir_firstlvl
+                                                + f"{subjID}_{ses}_avg_BOLD_{tmp_trial_type}_tSNR{tSNR_tresh}.npy" )
+                    print(fname_avgBOLD_subj)
+                    if os.path.exists(fname_avgBOLD_subj):
+                        tmp_avgBOLD_subj   = np.load(fname_avgBOLD_subj)
+
+                        ALL_tmp_avgBOLD_subj.append( tmp_avgBOLD_subj )
+                        subj_count = subj_count +1
                         
-                
-                # Z scores              
+            if subj_count > 0:
+                # Group Average BOLD response         
                 ALL_avgBOLD_subj = np.array(ALL_tmp_avgBOLD_subj)
+                
                 all_avg_BOLD = np.mean(ALL_avgBOLD_subj, axis=0)
+                #all_std_BOLD = np.std(ALL_avgBOLD_subj, axis=0)
+                
+                timepoints = np.arange(-1, all_avg_BOLD.shape[0]-1)
+                
+                idx_counter = 0
+                tmp_dataframe = pd.DataFrame(columns=['subject', 'timepoint','signal', 'condition'])
+                for kk, tmp_data_BOLD in enumerate(ALL_avgBOLD_subj):
+                    for k, i_tp in enumerate(timepoints):
+                        tmp_dataframe.loc[idx_counter] = {'subject':str(kk), 'timepoint':i_tp, 
+                                        'signal': tmp_data_BOLD[k], 'condition': tmp_trial_type}
+                        
+                        idx_counter = idx_counter + 1 
+                
+
+                BOLD_fMRI_dataframe = pd.concat([BOLD_fMRI_dataframe, tmp_dataframe], ignore_index=True)
+
+                
                 fname_all_avg_BOLD = ( fdir_group_firstlvl_final +
-                f"GroupN{subj_count}_{ses}_Nruns_{runs_count}_FE_avg_z_{tmp_trial_type}_tSNR{tSNR_tresh}.nii")
-                                
-                nib.save(img=all_avg_BOLD, filename=fname_all_avg_BOLD)
+                    f"GroupN{subj_count}_{session}_Nruns_{runs_count}_FE_avg_BOLD_{tmp_trial_type}_tSNR{tSNR_tresh}")
+                                    
+                np.save(fname_all_avg_BOLD, BOLD_fMRI_dataframe)
+                
+
+            plt.figure
+            sns.lineplot(x="timepoint", y="signal",
+                hue="condition",data=BOLD_fMRI_dataframe)
+            plt.xlim((-2, 10))
+            plt.title(f'BOLD response (N:{subj_count})')
+            plt.ylabel('BOLD signal')
+            plt.xlabel('Time (scans)')
+            fname_fig_avg_BOLD = ( fdir_group_firstlvl_final +
+                    f"GroupN{subj_count}_{session}_Nruns_{runs_count}_FE_avg_BOLD_{tmp_trial_type}_tSNR{tSNR_tresh}")
+                
+            plt.savefig(fname_fig_avg_BOLD)
             
     return
