@@ -82,7 +82,7 @@ def get_participants(params):
 #
 #
 #
-    tsv_header_name = ['participant_id', 'Session', 'StudyID']
+    tsv_header_name = ['participant_id', 'session', 'studyid']
 
     fname_participants_tsv = params.get('fdir_data') + 'participants.tsv'
     if (os.path.exists(fname_participants_tsv) == False):
@@ -90,4 +90,10 @@ def get_participants(params):
     else:
         rd = pd.read_csv(fname_participants_tsv, sep='\t')
 
-    return [rd.loc[item].participant_id for item in np.arange(rd.shape[0])]
+    [rd.loc[item].participant_id for item in np.arange(rd.shape[0])]
+
+    Nsession = list( np.unique( rd['session'] ) )
+    
+    participants = list( np.unique( rd['participant_id'] ) )
+
+    return participants

@@ -18,7 +18,7 @@ def warn_message(input_str):
 ##   Simple warning structure for the toolbox
     return print(f"DvdV warns: {input_str}")
 
-def say_welcome(vers_info=None):
+def say_welcome(vers_info='1.52.3'):
     """ Provides user with welcome image
 
     Parameters
@@ -49,6 +49,7 @@ def say_welcome(vers_info=None):
     '   |   |_____   /      | |  |_| |\n'+
     '   |         \ |  |_|  | |      |\n'+
     '    \________/  \___/|_/ \______/  version: ' + vers_info
+    'Written by: Daniel van de Velden                         '
     )
     return
 

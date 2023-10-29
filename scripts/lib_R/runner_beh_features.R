@@ -586,21 +586,21 @@ for (session in sessions){
     
     # Calculate the average accuracy
     df_tmp_acc_avg <- data.frame(Type = c('Total', 'Congruent', 'Incongruent'),
-                                 Acc_avg = c(mean(concatenated_df$key_resp.corr),
-                                             mean(concatenated_df$key_resp.corr[concatenated_df$type=='congruent']),
-                                             mean(concatenated_df$key_resp.corr[concatenated_df$type=='incongruent'])),
-                                 SD = c(sd(concatenated_df$key_resp.corr),
-                                        sd(concatenated_df$key_resp.corr[concatenated_df$type=='congruent']),
-                                        sd(concatenated_df$key_resp.corr[concatenated_df$type=='incongruent'])),
-                                 SE = c(sd(concatenated_df$key_resp.corr) / sqrt(length(concatenated_df$key_resp.corr)),
-                                        sd(concatenated_df$key_resp.corr[concatenated_df$type=='congruent']) / sqrt(length(concatenated_df$key_resp.corr[concatenated_df$type=='congruent'])),
-                                        sd(concatenated_df$key_resp.corr[concatenated_df$type=='incongruent']) 
-                                        / sqrt(length(concatenated_df$key_resp.corr[concatenated_df$type=='incongruent'])))
+                                 Acc_avg = c(mean(df_acc$acc),
+                                             mean(df_acc$acc[df_acc$Type=='Congruent']),
+                                             mean(df_acc$acc[df_acc$Type=='Incongruent'])),
+                                 SD = c(sd(df_acc$acc),
+                                        sd(df_acc$acc[df_acc$Type=='Congruent']),
+                                        sd(df_acc$acc[df_acc$Type=='Incongruent'])),
+                                 SE = c(sd(df_acc$acc) / sqrt(length(df_acc$acc)),
+                                        sd(df_acc$acc[df_acc$Type=='Congruent']) / sqrt(length(df_acc$acc[df_acc$Type=='Congruent'])),
+                                        sd(df_acc$acc[df_acc$Type=='Incongruent']) 
+                                        / sqrt(length(df_acc$acc[df_acc$Type=='Incongruent'])))
                                  )
     
-    df_tmp_acc_avg['Acc_avg'] <- df_tmp_acc_avg['Acc_avg'] *100
-    df_tmp_acc_avg['SD'] <- df_tmp_acc_avg['SD'] *100
-    df_tmp_acc_avg['SE'] <- df_tmp_acc_avg['SE'] *100
+    df_tmp_acc_avg['Acc_avg'] <- df_tmp_acc_avg['Acc_avg']
+    df_tmp_acc_avg['SD'] <- df_tmp_acc_avg['SD']
+    df_tmp_acc_avg['SE'] <- df_tmp_acc_avg['SE']
     
     df_tmp_acc_avg <- cbind(df_tmp_acc_avg, session)
     
