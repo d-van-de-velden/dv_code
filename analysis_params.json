@@ -1,0 +1,16 @@
+{
+    "study_id": "COCOA",
+    "fdir_study": "data/p_02825/cocoa",
+    "fdir_analysis": "/data/p_02825/cocoa/dv_code/",
+    "fdir_fs": "/data/p_02825/cocoa/data/FREESURFER",
+    "fdir_sge": "/data/p_02825/cocoa/sge",
+    "fdir_bash": "/data/p_02825/cocoa/bash",
+    "fdir_lib_bash": "/data/u_velden_software/python/debian-bullseye-amd64/lib/python3.9/site-packages/dv_code/scripts/lib_bash",
+    "fname_config": "/data/p_02825/cocoa/dv_code/dcm2bids_config.json",
+    "fdir_data": "/data/p_02825/cocoa/data/",
+    "fdir_sourcedata": "/data/p_02825/cocoa/data/sourcedata",
+    "fdir_proc": "/data/p_02825/cocoa/data/derivatives",
+    "fdir_proc_pre": "/data/p_02825/cocoa/data/derivatives/preprocessed",
+    "fdir_proc_stat": "/data/p_02825/cocoa/data/derivatives/stats",
+    "fdir_datashare": "/COCOA/raw/german/"
+}
